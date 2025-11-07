@@ -6,13 +6,14 @@ import { FaStar, FaShoppingCart, FaShare } from "react-icons/fa";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { useCart } from "@/Hooks/useCart";
 
 export default function ProductPage({ params }) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const resolvedParams = React.use(params)
-  
+  const {handleAddToCart} = useCart()
   // Fetch single product data
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', resolvedParams?.id],
@@ -22,6 +23,7 @@ export default function ProductPage({ params }) {
     },
     enabled: !!resolvedParams?.id // Only fetch if we have an ID
   });
+  const convertQyt = Number(quantity)
   
 
   // Fallback data if no product is found
@@ -197,11 +199,6 @@ export default function ProductPage({ params }) {
                       )}
                     </div>
                   </div>
-                  
-                  {/* Image Label */}
-                  <p className="text-center text-gray-600 text-sm mt-4">
-                    {productImages[selectedImage]?.label}
-                  </p>
                 </div>
               </div>
             </div>
@@ -404,17 +401,13 @@ export default function ProductPage({ params }) {
                   {productData.stock > 0 ? 'Buy Now' : 'Out of Stock'}
                 </Link>
 
-                <Link
-                  href="/cart"
-                  className="flex-1 border-2 border-green-600 text-green-600 hover:bg-green-50 px-6 py-4 rounded-xl font-semibold text-center transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={(e) => {
-                    if (productData.stock === 0) {
-                      e.preventDefault();
-                    }
-                  }}
+                <button
+                onClick={() => handleAddToCart(productData._id,convertQyt,productData.name)}
+                  className="flex-1 border-2 border-green-600 cursor-pointer text-green-600 hover:bg-green-50 px-6 py-4 rounded-xl font-semibold text-center transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  
                 >
                   {productData.stock > 0 ? 'Add To Cart' : 'Out of Stock'}
-                </Link>
+                </button>
               </div>
             </div>
           </div>

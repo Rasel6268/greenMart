@@ -1,44 +1,66 @@
-'use client'
+"use client";
+import { useCart } from "@/Hooks/useCart";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import Link from "next/link";
 import React, { useState, useMemo } from "react";
+import { toast } from "react-toastify";
 
 const Shop = () => {
-  const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useQuery({
-    queryKey: ['categories'],
+  const { addToCart,handleAddToCart } = useCart();
+
+  const {
+    data: categories,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useQuery({
+    queryKey: ["categories"],
     queryFn: async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/count_product`);
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/products/count_product`
+        );
         return res.data?.data ?? [];
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error("Error fetching categories:", error);
         return [];
       }
     },
   });
 
-  const { data: brand, isLoading: brandsLoading, error: brandsError } = useQuery({
-    queryKey: ['brands'],
+  const {
+    data: brand,
+    isLoading: brandsLoading,
+    error: brandsError,
+  } = useQuery({
+    queryKey: ["brands"],
     queryFn: async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/brandWithProductCount`);
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/products/brandWithProductCount`
+        );
         return res.data?.data ?? [];
       } catch (error) {
-        console.error('Error fetching brands:', error);
+        console.error("Error fetching brands:", error);
         return [];
       }
     },
   });
 
-  const { data: initialProducts, isLoading, error } = useQuery({
+  const {
+    data: initialProducts,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products`);
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/products`
+        );
         return res.data?.products ?? [];
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error("Error fetching products:", error);
         return [];
       }
     },
@@ -49,7 +71,7 @@ const Shop = () => {
       { id: 1, range: "$0 - $25", min: 0, max: 25, count: 15 },
       { id: 2, range: "$25 - $50", min: 25, max: 50, count: 23 },
       { id: 3, range: "$50 - $100", min: 50, max: 100, count: 31 },
-      { id: 4, range: "$100+", min: 100, max: 1000, count: 12 }
+      { id: 4, range: "$100+", min: 100, max: 1000, count: 12 },
     ],
     brands: brand || [],
     ratings: [
@@ -57,8 +79,8 @@ const Shop = () => {
       { id: 2, stars: 4, count: 30 },
       { id: 3, stars: 3, count: 18 },
       { id: 4, stars: 2, count: 5 },
-      { id: 5, stars: 1, count: 2 }
-    ]
+      { id: 5, stars: 1, count: 2 },
+    ],
   };
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -75,13 +97,15 @@ const Shop = () => {
 
     // Search filter with safe access
     if (searchTerm) {
-      filtered = filtered.filter(product => {
+      filtered = filtered.filter((product) => {
         const searchLower = searchTerm.toLowerCase();
         return (
           product?.name?.toLowerCase().includes(searchLower) ||
           product?.category?.toLowerCase().includes(searchLower) ||
           product?.brand?.toLowerCase().includes(searchLower) ||
-          product?.tags?.some(tag => tag?.toLowerCase().includes(searchLower)) ||
+          product?.tags?.some((tag) =>
+            tag?.toLowerCase().includes(searchLower)
+          ) ||
           false
         );
       });
@@ -89,23 +113,24 @@ const Shop = () => {
 
     // Category filter
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter(product =>
-        product?.category && selectedCategories.includes(product.category)
+      filtered = filtered.filter(
+        (product) =>
+          product?.category && selectedCategories.includes(product.category)
       );
     }
 
     // Brand filter
     if (selectedBrands.length > 0) {
-      filtered = filtered.filter(product =>
-        product?.brand && selectedBrands.includes(product.brand)
+      filtered = filtered.filter(
+        (product) => product?.brand && selectedBrands.includes(product.brand)
       );
     }
 
     // Price range filter
     if (selectedPriceRanges.length > 0) {
-      filtered = filtered.filter(product => {
-        return selectedPriceRanges.some(rangeId => {
-          const range = filtersData.priceRanges.find(r => r.id === rangeId);
+      filtered = filtered.filter((product) => {
+        return selectedPriceRanges.some((rangeId) => {
+          const range = filtersData.priceRanges.find((r) => r.id === rangeId);
           return product?.price >= range.min && product?.price <= range.max;
         });
       });
@@ -113,7 +138,7 @@ const Shop = () => {
 
     // Rating filter - fixed logic
     if (selectedRatings.length > 0) {
-      filtered = filtered.filter(product => {
+      filtered = filtered.filter((product) => {
         const productRating = Math.round(product?.rating || 0);
         return selectedRatings.includes(productRating);
       });
@@ -121,46 +146,68 @@ const Shop = () => {
 
     // Price sorting
     if (priceSort === "low-to-high") {
-      filtered = [...filtered].sort((a, b) => (a?.price || 0) - (b?.price || 0));
+      filtered = [...filtered].sort(
+        (a, b) => (a?.price || 0) - (b?.price || 0)
+      );
     } else if (priceSort === "high-to-low") {
-      filtered = [...filtered].sort((a, b) => (b?.price || 0) - (a?.price || 0));
+      filtered = [...filtered].sort(
+        (a, b) => (b?.price || 0) - (a?.price || 0)
+      );
     }
 
     return filtered;
-  }, [searchTerm, selectedCategories, selectedBrands, selectedPriceRanges, selectedRatings, priceSort, initialProducts, filtersData.priceRanges]);
+  }, [
+    searchTerm,
+    selectedCategories,
+    selectedBrands,
+    selectedPriceRanges,
+    selectedRatings,
+    priceSort,
+    initialProducts,
+    filtersData.priceRanges,
+  ]);
 
   // Handler functions
   const handleCategoryToggle = (categoryName) => {
-    setSelectedCategories(prev =>
+    setSelectedCategories((prev) =>
       prev.includes(categoryName)
-        ? prev.filter(c => c !== categoryName)
+        ? prev.filter((c) => c !== categoryName)
         : [...prev, categoryName]
     );
   };
 
   const handleBrandToggle = (brandName) => {
-    setSelectedBrands(prev =>
+    setSelectedBrands((prev) =>
       prev.includes(brandName)
-        ? prev.filter(b => b !== brandName)
+        ? prev.filter((b) => b !== brandName)
         : [...prev, brandName]
     );
   };
 
   const handlePriceRangeToggle = (rangeId) => {
-    setSelectedPriceRanges(prev =>
+    setSelectedPriceRanges((prev) =>
       prev.includes(rangeId)
-        ? prev.filter(r => r !== rangeId)
+        ? prev.filter((r) => r !== rangeId)
         : [...prev, rangeId]
     );
   };
 
   const handleRatingToggle = (rating) => {
-    setSelectedRatings(prev =>
+    setSelectedRatings((prev) =>
       prev.includes(rating)
-        ? prev.filter(r => r !== rating)
+        ? prev.filter((r) => r !== rating)
         : [...prev, rating]
     );
   };
+  // const handleAddToCart = (productId, quentity, productName) => {
+  //   const result = addToCart(productId, quentity);
+  //   console.log(result);
+  //   if (result.success == false) {
+  //     toast.info(result.message);
+  //   } else if (result.success == true) {
+  //     toast.success(`${productName} added to cart!`);
+  //   }
+  // };
 
   const clearAllFilters = () => {
     setSelectedCategories([]);
@@ -172,12 +219,18 @@ const Shop = () => {
   };
 
   const getActiveFiltersCount = () => {
-    return selectedCategories.length + selectedBrands.length + selectedPriceRanges.length + selectedRatings.length + (priceSort ? 1 : 0);
+    return (
+      selectedCategories.length +
+      selectedBrands.length +
+      selectedPriceRanges.length +
+      selectedRatings.length +
+      (priceSort ? 1 : 0)
+    );
   };
 
   // Image error handler
   const handleImageError = (e) => {
-    e.target.src = '/images/placeholder-product.jpg';
+    e.target.src = "/images/placeholder-product.jpg";
   };
 
   // Add loading state
@@ -193,7 +246,9 @@ const Shop = () => {
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="text-red-600 text-lg">Error loading products. Please try again later.</div>
+        <div className="text-red-600 text-lg">
+          Error loading products. Please try again later.
+        </div>
       </div>
     );
   }
@@ -214,8 +269,18 @@ const Shop = () => {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                 </div>
               </div>
@@ -227,8 +292,18 @@ const Shop = () => {
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
                 className="md:hidden flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                  />
                 </svg>
                 Filters
                 {getActiveFiltersCount() > 0 && (
@@ -240,7 +315,9 @@ const Shop = () => {
 
               {/* Price Sort Radio */}
               <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2">
-                <label className="text-sm text-gray-600 whitespace-nowrap">Sort by:</label>
+                <label className="text-sm text-gray-600 whitespace-nowrap">
+                  Sort by:
+                </label>
                 <select
                   value={priceSort}
                   onChange={(e) => setPriceSort(e.target.value)}
@@ -269,12 +346,18 @@ const Shop = () => {
       <div className="w-11/12 mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
           {/* Filters Sidebar */}
-          <div className={`lg:col-span-1 ${isFilterOpen ? 'block' : 'hidden lg:block'}`}>
+          <div
+            className={`lg:col-span-1 ${
+              isFilterOpen ? "block" : "hidden lg:block"
+            }`}
+          >
             <div className="bg-white shadow-lg rounded-lg sticky top-6">
               {/* Filters Header */}
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    Filters
+                  </h2>
                   {getActiveFiltersCount() > 0 && (
                     <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
                       {getActiveFiltersCount()} active
@@ -288,19 +371,30 @@ const Shop = () => {
                 <div className="p-4 border-b border-gray-200">
                   <h3 className="font-semibold text-gray-700 mb-3 flex items-center justify-between">
                     <span>Categories</span>
-                    <span className="text-xs text-gray-500">{selectedCategories.length} selected</span>
+                    <span className="text-xs text-gray-500">
+                      {selectedCategories.length} selected
+                    </span>
                   </h3>
                   <div className="space-y-2">
                     {categories?.map((category, index) => (
-                      <label key={category.category || index} className="flex items-center justify-between group cursor-pointer">
+                      <label
+                        key={category.category || index}
+                        className="flex items-center justify-between group cursor-pointer"
+                      >
                         <div className="flex items-center space-x-3">
                           <input
                             type="checkbox"
-                            checked={selectedCategories.includes(category.category)}
-                            onChange={() => handleCategoryToggle(category.category)}
+                            checked={selectedCategories.includes(
+                              category.category
+                            )}
+                            onChange={() =>
+                              handleCategoryToggle(category.category)
+                            }
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
-                          <span className="text-gray-700 group-hover:text-blue-600">{category.category}</span>
+                          <span className="text-gray-700 group-hover:text-blue-600">
+                            {category.category}
+                          </span>
                         </div>
                         <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full group-hover:bg-blue-100 group-hover:text-blue-600">
                           {category.totalProducts || 0}
@@ -308,7 +402,9 @@ const Shop = () => {
                       </label>
                     ))}
                     {(!categories || categories.length === 0) && (
-                      <p className="text-gray-500 text-sm">No categories available</p>
+                      <p className="text-gray-500 text-sm">
+                        No categories available
+                      </p>
                     )}
                   </div>
                 </div>
@@ -316,11 +412,16 @@ const Shop = () => {
                 <div className="p-4 border-b border-gray-200">
                   <h3 className="font-semibold text-gray-700 mb-3 flex items-center justify-between">
                     <span>Brands</span>
-                    <span className="text-xs text-gray-500">{selectedBrands.length} selected</span>
+                    <span className="text-xs text-gray-500">
+                      {selectedBrands.length} selected
+                    </span>
                   </h3>
                   <div className="space-y-2">
                     {filtersData.brands?.map((brandItem, index) => (
-                      <label key={brandItem.brand || index} className="flex items-center justify-between group cursor-pointer">
+                      <label
+                        key={brandItem.brand || index}
+                        className="flex items-center justify-between group cursor-pointer"
+                      >
                         <div className="flex items-center space-x-3">
                           <input
                             type="checkbox"
@@ -328,23 +429,35 @@ const Shop = () => {
                             onChange={() => handleBrandToggle(brandItem.brand)}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
-                          <span className="text-gray-700 group-hover:text-blue-600">{brandItem.brand}</span>
+                          <span className="text-gray-700 group-hover:text-blue-600">
+                            {brandItem.brand}
+                          </span>
                         </div>
-                        <span className="text-gray-500 text-xs">({brandItem.totalProducts || 0})</span>
+                        <span className="text-gray-500 text-xs">
+                          ({brandItem.totalProducts || 0})
+                        </span>
                       </label>
                     ))}
-                    {(!filtersData.brands || filtersData.brands.length === 0) && (
-                      <p className="text-gray-500 text-sm">No brands available</p>
+                    {(!filtersData.brands ||
+                      filtersData.brands.length === 0) && (
+                      <p className="text-gray-500 text-sm">
+                        No brands available
+                      </p>
                     )}
                   </div>
                 </div>
 
                 {/* Price Range */}
                 <div className="p-4 border-b border-gray-200">
-                  <h3 className="font-semibold text-gray-700 mb-3">Price Range</h3>
+                  <h3 className="font-semibold text-gray-700 mb-3">
+                    Price Range
+                  </h3>
                   <div className="space-y-2">
                     {filtersData.priceRanges.map((range) => (
-                      <label key={range.id} className="flex items-center justify-between group cursor-pointer">
+                      <label
+                        key={range.id}
+                        className="flex items-center justify-between group cursor-pointer"
+                      >
                         <div className="flex items-center space-x-3">
                           <input
                             type="checkbox"
@@ -352,22 +465,27 @@ const Shop = () => {
                             onChange={() => handlePriceRangeToggle(range.id)}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
-                          <span className="text-gray-700 group-hover:text-blue-600">{range.range}</span>
+                          <span className="text-gray-700 group-hover:text-blue-600">
+                            {range.range}
+                          </span>
                         </div>
-                        <span className="text-gray-500 text-xs">({range.count})</span>
+                        <span className="text-gray-500 text-xs">
+                          ({range.count})
+                        </span>
                       </label>
                     ))}
                   </div>
                 </div>
-
-                
 
                 {/* Ratings Filter */}
                 <div className="p-4 border-b border-gray-200">
                   <h3 className="font-semibold text-gray-700 mb-3">Ratings</h3>
                   <div className="space-y-2">
                     {filtersData.ratings.map((rating) => (
-                      <label key={rating.id} className="flex items-center justify-between group cursor-pointer">
+                      <label
+                        key={rating.id}
+                        className="flex items-center justify-between group cursor-pointer"
+                      >
                         <div className="flex items-center space-x-3">
                           <input
                             type="checkbox"
@@ -379,14 +497,20 @@ const Shop = () => {
                             {[...Array(5)].map((_, i) => (
                               <span
                                 key={i}
-                                className={`text-sm ${i < rating.stars ? 'text-yellow-400' : 'text-gray-300'}`}
+                                className={`text-sm ${
+                                  i < rating.stars
+                                    ? "text-yellow-400"
+                                    : "text-gray-300"
+                                }`}
                               >
                                 ★
                               </span>
                             ))}
                           </div>
                         </div>
-                        <span className="text-gray-500 text-xs">({rating.count})</span>
+                        <span className="text-gray-500 text-xs">
+                          ({rating.count})
+                        </span>
                       </label>
                     ))}
                   </div>
@@ -412,9 +536,12 @@ const Shop = () => {
             {/* Results Header */}
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">All Products</h1>
+                <h1 className="text-2xl font-bold text-gray-800">
+                  All Products
+                </h1>
                 <p className="text-gray-600">
-                  Showing {filteredProducts?.length || 0} of {initialProducts?.length || 0} products
+                  Showing {filteredProducts?.length || 0} of{" "}
+                  {initialProducts?.length || 0} products
                 </p>
               </div>
             </div>
@@ -423,19 +550,27 @@ const Shop = () => {
             {filteredProducts?.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredProducts?.map((product) => (
-                  <div key={product._id} className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                  <div
+                    key={product._id}
+                    className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                  >
                     {/* Product Image */}
                     <div className="relative">
-                      <img 
-                        src={product.images?.[0] || '/images/placeholder-product.jpg'} 
-                        alt={product.name || 'Product image'}
+                      <img
+                        src={
+                          product.images?.[0] ||
+                          "/images/placeholder-product.jpg"
+                        }
+                        alt={product.name || "Product image"}
                         className="w-full h-48 object-cover rounded-t-lg"
                         onError={handleImageError}
                       />
                       {/* Badges */}
                       <div className="absolute top-2 left-2 flex flex-col gap-1">
                         {product.isNewArrival && (
-                          <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded">New</span>
+                          <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                            New
+                          </span>
                         )}
                         {product.isDiscountActive && (
                           <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">
@@ -443,10 +578,14 @@ const Shop = () => {
                           </span>
                         )}
                         {product.isFeatured && (
-                          <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded">Featured</span>
+                          <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded">
+                            Featured
+                          </span>
                         )}
                         {product.bestseller && (
-                          <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded">Bestseller</span>
+                          <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded">
+                            Bestseller
+                          </span>
                         )}
                       </div>
                     </div>
@@ -454,9 +593,11 @@ const Shop = () => {
                     {/* Product Info */}
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-gray-800 line-clamp-2 flex-1">{product.name || 'Unnamed Product'}</h3>
+                        <h3 className="font-semibold text-gray-800 line-clamp-2 flex-1">
+                          {product.name || "Unnamed Product"}
+                        </h3>
                         <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">
-                          {product.brand || 'No Brand'}
+                          {product.brand || "No Brand"}
                         </span>
                       </div>
 
@@ -464,7 +605,14 @@ const Shop = () => {
                       <div className="flex items-center mb-2">
                         <div className="flex items-center">
                           {[...Array(5)].map((_, i) => (
-                            <span key={i} className={`text-sm ${i < Math.floor(product.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}>
+                            <span
+                              key={i}
+                              className={`text-sm ${
+                                i < Math.floor(product.rating || 0)
+                                  ? "text-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            >
                               ★
                             </span>
                           ))}
@@ -476,23 +624,31 @@ const Shop = () => {
 
                       {/* Price */}
                       <div className="flex items-center mb-3">
-                        <span className="text-lg font-bold text-gray-900">${product.retailPrice || 0}</span>
-                        {product.regularPrice && product.regularPrice > product.retailPrice && (
-                          <span className="text-sm text-gray-500 line-through ml-2">
-                            ${product.regularPrice}
-                          </span>
-                        )}
+                        <span className="text-lg font-bold text-gray-900">
+                          ${product.retailPrice || 0}
+                        </span>
+                        {product.regularPrice &&
+                          product.regularPrice > product.retailPrice && (
+                            <span className="text-sm text-gray-500 line-through ml-2">
+                              ${product.regularPrice}
+                            </span>
+                          )}
                       </div>
 
                       {/* Category and Button */}
                       <div className="flex justify-between items-center">
-                        <Link 
-                          href={`/product-details/${product._id}`} 
+                        <Link
+                          href={`/product-details/${product._id}`}
                           className="bg-blue-600 px-4 py-2 rounded-lg text-white font-medium hover:bg-blue-700 transition-colors"
                         >
                           Details
                         </Link>
-                        <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium cursor-pointer">
+                        <button
+                          onClick={() =>
+                            handleAddToCart(product._id, 1, product.name)
+                          }
+                          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium cursor-pointer"
+                        >
                           Add to Cart
                         </button>
                       </div>
@@ -503,12 +659,26 @@ const Shop = () => {
             ) : (
               <div className="text-center py-12">
                 <div className="text-gray-400 mb-4">
-                  <svg className="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  <svg
+                    className="w-16 h-16 mx-auto"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1}
+                      d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">No products found</h3>
-                <p className="text-gray-500 mb-4">Try adjusting your search or filter criteria</p>
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                  No products found
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  Try adjusting your search or filter criteria
+                </p>
                 <button
                   onClick={clearAllFilters}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"

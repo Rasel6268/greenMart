@@ -2,6 +2,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastContainer } from "react-toastify";
 import ReactQueryProvider from "./providers/ReactQueryProvider";
+import AuthProvider from "@/context/auth/AuthProvider";
+import CartProvider from "@/context/cart/CartProvider";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -72,10 +75,14 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ReactQueryProvider>
-           {children}
-          <ToastContainer />
-        </ReactQueryProvider>
+        <AuthProvider>
+          <CartProvider>
+            <ReactQueryProvider>
+              {children}
+              <ToastContainer />
+            </ReactQueryProvider>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

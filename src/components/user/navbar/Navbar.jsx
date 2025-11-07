@@ -16,11 +16,13 @@ import { FcAbout } from "react-icons/fc";
 import { MdLocalOffer } from "react-icons/md";
 import Link from "next/link";
 import { UserRoundPlus, LogIn, House, ShoppingBag, User, Heart, Settings, LogOut } from "lucide-react";
+import { useCart } from "@/Hooks/useCart";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isAuth = true                                                                        ;
   const [openUserModel, setOpenUserModel] = useState(false);
+  const {cart} = useCart()
 
   const openUser = () => {
     setOpenUserModel(!openUserModel);
@@ -131,13 +133,13 @@ const Navbar = () => {
 
                       {/* Menu Items */}
                       <div className="py-2">
-                        <button className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3">
+                        <Link href='/' className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 ">
                           <User className="w-5 h-5 text-gray-400" />
-                          <span>My Profile</span>
-                        </button>
+                          <span>Deshboard</span>
+                        </Link>
                         <div className="border-t border-gray-100 my-1"></div>
 
-                        <button className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3">
+                        <button className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer">
                           <LogOut className="w-5 h-5" />
                           <span>Logout</span>
                         </button>
@@ -176,7 +178,7 @@ const Navbar = () => {
               <Link href='/cart' className="relative">
                 <AiOutlineShoppingCart className="text-2xl text-gray-600 hover:text-green-600 transition-colors cursor-pointer" />
                 <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                  5
+                  {cart.length}
                 </span>
               </Link >
 
