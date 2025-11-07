@@ -400,8 +400,7 @@ export default function ProductPage({ params }) {
                   <FaShoppingCart />
                   {productData.stock > 0 ? 'Buy Now' : 'Out of Stock'}
                 </Link>
-
-                <button
+                 <button
                 onClick={() => handleAddToCart(productData._id,convertQyt,productData.name)}
                   className="flex-1 border-2 border-green-600 cursor-pointer text-green-600 hover:bg-green-50 px-6 py-4 rounded-xl font-semibold text-center transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   

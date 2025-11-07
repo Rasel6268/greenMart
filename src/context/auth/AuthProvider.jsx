@@ -2,10 +2,11 @@
 import React from 'react';
 import { AuthContext } from './AuthContext';
 
-const authData = {
-    user: 'user data'
-}
+
 const AuthProvider = ({children}) => {
+  const authData = {
+    
+  }
     return <AuthContext value={authData}>
       {children}
     </AuthContext>
