@@ -3,14 +3,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { FaProductHunt, FaUser } from 'react-icons/fa'
+import { MdBorderAll, MdBrandingWatermark, MdCategory, MdDashboard, MdDeliveryDining } from 'react-icons/md'
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: '🏠' },
-  { name: 'Categories', href: '/categories', icon: '📊' },
-  { name: 'Brands', href: '/brands', icon: '📊' },
-  { name: 'Users', href: '/users', icon: '👥' },
-  { name: 'Products', href: '/products', icon: '📦' },
-  { name: 'Orders', href: '/orders', icon: '🛒' },
+  { name: 'Dashboard', href: '/dashboard', icon: <MdDashboard></MdDashboard> },
+  { name: 'Categories', href: '/categories', icon: <MdCategory></MdCategory> },
+  { name: 'Brands', href: '/brands', icon: <MdBrandingWatermark></MdBrandingWatermark> },
+  { name: 'Users', href: '/users', icon: <FaUser></FaUser> },
+  { name: 'Products', href: '/products', icon: <FaProductHunt></FaProductHunt> },
+  { name: 'Delivery Cost', href: '/delivery_cost', icon: <MdDeliveryDining></MdDeliveryDining> },
+  { name: 'Orders', href: '/orders', icon: <MdBorderAll></MdBorderAll> },
   { name: 'Settings', href: '/settings', icon: '⚙️' },
 ]
 

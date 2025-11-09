@@ -5,23 +5,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { toast } from "react-toastify";
 import { useCart } from "@/Hooks/useCart";
+import TakaIcon from "@/components/TakaIcon";
 
 export default function CartPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalPrice, setTotalPrice] = useState(0);
-  const {getCart,saveCart,cart,setCart}  = useCart()
- 
+  const { getCart, saveCart, cart, setCart } = useCart();
+  const [discountAmount, setDiscountAm] = useState(0);
 
- 
-
-  //Save cart to localStorage
-  // const saveCart = (cart) => {
-  //   if (typeof window !== "undefined") {
-  //     localStorage.setItem("cart", JSON.stringify(cart));
-  //   }
-  //   setCart(cart);
-  // };
+  const finalPrice = totalPrice - discountAmount;
 
   // ✅ Get the correct price tier and label
   const getWholesaleTier = (product, quantity) => {
@@ -73,11 +66,23 @@ export default function CartPage() {
 
   // ✅ Calculate total using dynamic wholesale price
   const calculateTotal = () => {
-    const total = products.reduce((acc, product) => {
-      const { price } = getWholesaleTier(product, product.quantity);
-      return acc + price * product.quantity;
-    }, 0);
+    const { total, discountAmount } = products.reduce(
+      (acc, product) => {
+        const { price } = getWholesaleTier(product, product.quantity);
+
+        const itemDiscount = (price * (product.discountPercent || 0)) / 100;
+        const itemTotal = price  * product.quantity;
+
+        acc.total += itemTotal;
+        acc.discountAmount += itemDiscount * product.quantity;
+
+        return acc;
+      },
+      { total: 0, discountAmount: 0 }
+    );
+
     setTotalPrice(total);
+    setDiscountAm(discountAmount);
   };
 
   const updateQuantity = (id, quantity) => {
@@ -97,11 +102,10 @@ export default function CartPage() {
   const removeFromCart = (id) => {
     const updatedCart = cart.filter((item) => item.id !== id);
     saveCart(updatedCart);
-    
 
     const updatedProducts = products.filter((p) => p._id !== id);
     setProducts(updatedProducts);
-    toast.success('Cart remove successfully')
+    toast.success("Cart remove successfully");
   };
 
   const clearCart = () => {
@@ -430,7 +434,8 @@ export default function CartPage() {
                 </div>
 
                 {/* Price Breakdown with animations */}
-                <div className="space-y-3 py-4 border-t border-gray-100">
+                <div className="space-y-4 py-4 border-t border-gray-100">
+                  {/* Subtotal */}
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">
                       Subtotal (
@@ -442,6 +447,33 @@ export default function CartPage() {
                     </span>
                   </div>
 
+                  {/* Discount Section - Highlighted */}
+                  <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center space-x-2">
+                        <svg
+                          className="w-5 h-5 text-green-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm4.707 5.707a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L8.414 10l1.293-1.293zm4 0a1 1 0 010 1.414L11.586 10l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span className="text-green-800 font-medium">
+                          Discount Applied
+                        </span>
+                      </div>
+                      <span className="text-green-700 font-bold text-lg">
+                        -${discountAmount.toFixed(2)}
+                      </span>
+                    </div>
+                    
+                  </div>
+
+                  {/* Shipping */}
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">Shipping</span>
                     <span className="text-gray-500">
@@ -449,6 +481,7 @@ export default function CartPage() {
                     </span>
                   </div>
 
+                  {/* Tax */}
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">Tax estimate</span>
                     <span className="text-gray-500">
@@ -461,7 +494,8 @@ export default function CartPage() {
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
                       <div className="flex justify-between text-sm text-blue-800 mb-2">
                         <span>
-                          Add ${(200 - totalPrice).toFixed(2)} for free shipping!
+                          Add ${(200 - totalPrice).toFixed(2)} for free
+                          shipping!
                         </span>
                         <span>
                           {Math.min((totalPrice / 200) * 100, 100).toFixed(0)}%
@@ -471,7 +505,10 @@ export default function CartPage() {
                         <div
                           className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
                           style={{
-                            width: `${Math.min((totalPrice / 50) * 100, 100)}%`,
+                            width: `${Math.min(
+                              (totalPrice / 200) * 100,
+                              100
+                            )}%`,
                           }}
                         ></div>
                       </div>
@@ -493,34 +530,11 @@ export default function CartPage() {
                   </div>
                   <div className="text-right">
                     <span className="text-2xl font-bold text-green-600 block">
-                      ${totalPrice.toFixed(2)}
+                      ${finalPrice.toFixed(2)}
                     </span>
                     <span className="text-xs text-gray-500">USD</span>
                   </div>
                 </div>
-
-                {/* Enhanced Promo Code Section */}
-                <div className="my-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Promo Code
-                    </label>
-                    <button className="text-sm text-green-600 hover:text-green-700 font-medium">
-                      Have a code?
-                    </button>
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Enter promo code"
-                      className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                    />
-                    <button className="px-6 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-transform">
-                      Apply
-                    </button>
-                  </div>
-                </div>
-
                 {/* Enhanced Checkout Button */}
                 <Link
                   href="/checkout"
