@@ -1,52 +1,123 @@
+// contexts/AuthContext.jsx
 "use client";
-import React, { useEffect, useState } from "react";
-import { AuthContext } from "./AuthContext";
+
+import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   createUserWithEmailAndPassword,
-  onAuthStateChanged,
   signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 import { auth } from "@/config/firebase";
+import api from "@/lib/api";
+import { AuthContext } from "./AuthContext";
+import instance from "@/lib/instance";
 
-const AuthProvider = ({ children }) => {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [adminLoading, setAdminLoading] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
-  // User register
+  // Register
   const userRegister = (email, password) => {
     setLoading(true);
     return createUserWithEmailAndPassword(auth, email, password);
   };
 
-  // User login
+
+  // Login
   const userLogin = (email, password) => {
     setLoading(true);
     return signInWithEmailAndPassword(auth, email, password);
   };
 
-  // Observe user state
+  // Google Login
+  const googleProvider = new GoogleAuthProvider();
+  const googleLogin = () => {
+    setLoading(true);
+    return signInWithPopup(auth, googleProvider);
+  };
+
+  // Logout
+  const userLogout = () => {
+    setLoading(true);
+    setAdmin(null);
+    return signOut(auth);
+  };
+
+  // Check if user is admin
+  const checkAdminStatus = async (email) => {
+    if (!email) {
+      setAdmin(null);
+      return;
+    }
+
+    setAdminLoading(true);
+    try {
+      const response = await instance.get(`/admins/${email}`);
+      if (response.data.success && response.data.data) {
+        // Check if user has admin privileges based on your data structure
+        const userData = response.data.data;
+        const isUserAdmin = userData.userType === 'admin';
+        
+        if (isUserAdmin) {
+          setIsAdmin(isUserAdmin);
+        } else {
+          setAdmin(null);
+        }
+      } else {
+        setAdmin(null);
+      }
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      setAdmin(null);
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+
+  // Track logged-in user
   useEffect(() => {
-    const unSubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      
+      if (currentUser?.email) {
+        await checkAdminStatus(currentUser.email);
+      } else {
+        setAdmin(null);
+      }
+      
       setLoading(false);
     });
 
-    // Cleanup subscription
-    return () => unSubscribe();
+    return () => unsubscribe();
   }, []);
 
-  const authData = {
+  const userData = {
     user,
+    admin,
     loading,
+    adminLoading,
     userRegister,
     userLogin,
+    googleLogin,
+    userLogout,
+    checkAdminStatus,
+    isAdmin,
   };
 
   return (
-    <AuthContext value={authData}>
+    <AuthContext value={userData}>
       {children}
     </AuthContext>
   );
 };
 
-export default AuthProvider;
+export default AuthProvider
+
+

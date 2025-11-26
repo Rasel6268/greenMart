@@ -4,7 +4,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { FaProductHunt, FaUser } from 'react-icons/fa'
-import { MdBorderAll, MdBrandingWatermark, MdCategory, MdDashboard, MdDeliveryDining } from 'react-icons/md'
+import { MdBorderAll, MdBrandingWatermark, MdCategory, MdDashboard, MdDeliveryDining, MdPayment } from 'react-icons/md'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: <MdDashboard></MdDashboard> },
@@ -14,6 +14,7 @@ const navigation = [
   { name: 'Products', href: '/products', icon: <FaProductHunt></FaProductHunt> },
   { name: 'Delivery Cost', href: '/delivery_cost', icon: <MdDeliveryDining></MdDeliveryDining> },
   { name: 'Orders', href: '/orders', icon: <MdBorderAll></MdBorderAll> },
+  { name: 'Transaction', href: '/transaction', icon: <MdPayment></MdPayment> },
   { name: 'Settings', href: '/settings', icon: '⚙️' },
 ]
 

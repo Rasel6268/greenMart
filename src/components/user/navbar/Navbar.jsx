@@ -1,33 +1,59 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
-  IoIosContact,
-  IoIosSearch,
   IoIosMenu,
   IoIosClose,
-  IoIosHome,
-  IoIosLogIn,
-  IoIosLogOut,
 } from "react-icons/io";
-import { AiOutlineShoppingCart, AiOutlineUser } from "react-icons/ai";
-import { HiOutlineShoppingBag } from "react-icons/hi2";
-import { FaRegHeart, FaChevronDown, FaStore } from "react-icons/fa";
+import { AiOutlineShoppingCart } from "react-icons/ai";
+import { FaRegHeart } from "react-icons/fa";
 import { FcAbout } from "react-icons/fc";
-import { MdLocalOffer } from "react-icons/md";
 import Link from "next/link";
-import { UserRoundPlus, LogIn, House, ShoppingBag, User, Heart, Settings, LogOut } from "lucide-react";
+import {
+  UserRoundPlus,
+  LogIn,
+  House,
+  ShoppingBag,
+  User,
+  LogOut,
+} from "lucide-react";
 import { useCart } from "@/Hooks/useCart";
+import { useAuth } from "@/Hooks/useAuth";
+import { toast } from "react-toastify";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isAuth = true                                                                        ;
   const [openUserModel, setOpenUserModel] = useState(false);
-  const {cart} = useCart()
+  const userModelRef = useRef(null);
+  const { user,userLogout } = useAuth();
+  const { cart } = useCart();
+  
+  const isAuth = !!user;
+
+  // Close user model when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userModelRef.current && !userModelRef.current.contains(event.target)) {
+        setOpenUserModel(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const openUser = () => {
     setOpenUserModel(!openUserModel);
   };
-  console.log(openUserModel);
+
+  const closeMobileMenu = () => {
+    setIsMenuOpen(false);
+  };
+  const LogoutHandler = () => {
+     userLogout()
+     toast.info('Logout success')
+  }
 
   return (
     <section className="bg-white shadow-lg sticky top-0 z-50">
@@ -56,34 +82,35 @@ const Navbar = () => {
               </div>
             </Link>
           </div>
+
           {/* Navigation Links - Desktop */}
           <div className="hidden lg:flex items-center justify-center">
             <ul className="flex items-center justify-center gap-8 font-medium">
               <li>
                 <Link
-                  href={"/"}
+                  href="/"
                   className="text-gray-700 hover:text-green-600 transition-colors duration-300 flex items-center gap-1 group"
                 >
-                  <House></House>
+                  <House className="w-4 h-4" />
                   Home
                 </Link>
               </li>
               <li>
                 <Link
-                  href={"/shop"}
+                  href="/shop"
                   className="text-gray-700 hover:text-green-600 transition-colors duration-300 flex items-center gap-1 group"
                 >
-                  <ShoppingBag></ShoppingBag>
+                  <ShoppingBag className="w-4 h-4" />
                   Shop
                 </Link>
               </li>
               <li>
                 <Link
-                  href={"/about"}
+                  href="/about"
                   className="text-gray-700 hover:text-green-600 transition-colors duration-300 flex items-center gap-1 group"
                 >
                   <span className="group-hover:scale-110 transition-transform">
-                    ℹ️
+                    <FcAbout className="w-4 h-4" />
                   </span>
                   About
                 </Link>
@@ -97,35 +124,39 @@ const Navbar = () => {
             <div className="flex items-center gap-4">
               {/* Login/User */}
               {isAuth ? (
-                <div className="relative">
-                  <div className="w-12 h-12 border-4 border-green-500 rounded-full overflow-hidden cursor-pointer hover:border-green-600 transition-colors">
-                    <button onClick={openUser} className="w-full h-full">
+                <div ref={userModelRef} className="relative lg:flex cursor-pointer hidden">
+                  <div className="w-12 h-12 border-4 border-green-500 rounded-full overflow-hidden hover:border-green-600 transition-colors cursor-pointer">
+                    <button 
+                      onClick={openUser} 
+                      className="w-full h-full flex items-center justify-center bg-gray-100"
+                    >
                       <img
-                        src="/user-avatar.jpg"
+                        src={user.avatar || "/user-avatar.jpg"}
                         alt="User Avatar"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover cursor-pointer"
                       />
                     </button>
                   </div>
 
                   {openUserModel && (
-                    <div className="absolute right-0 mt-2 bg-white w-72 z-50 shadow-xl rounded-xl border border-gray-200 overflow-hidden">
+                    <div className="absolute right-0 top-14 mt-2 bg-white w-72 z-50 shadow-xl rounded-xl border border-gray-200 overflow-hidden">
                       {/* User Header */}
                       <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 border-b border-gray-100">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
                             <img
-                              src="/user-avatar.jpg"
+                              src={user.avatar || "/user-avatar.jpg"}
                               alt="User Avatar"
                               className="w-full h-full object-cover"
+                              
                             />
                           </div>
                           <div className="flex-1 min-w-0">
                             <h2 className="font-semibold text-gray-800 truncate">
-                              John Doe
+                              {user.name || "John Doe"}
                             </h2>
                             <p className="text-sm text-gray-600 truncate">
-                              john.doe@example.com
+                              {user.email || "john.doe@example.com"}
                             </p>
                           </div>
                         </div>
@@ -133,54 +164,58 @@ const Navbar = () => {
 
                       {/* Menu Items */}
                       <div className="py-2">
-                        <Link href='/' className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 ">
+                        <Link
+                          href="/profile"
+                          className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
+                          onClick={() => setOpenUserModel(false)}
+                        >
                           <User className="w-5 h-5 text-gray-400" />
-                          <span>Deshboard</span>
+                          <span>Dashboard</span>
                         </Link>
                         <div className="border-t border-gray-100 my-1"></div>
 
-                        <button className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer">
+                        <button onClick={LogoutHandler} className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer">
                           <LogOut className="w-5 h-5" />
-                          <span>Logout</span>
+                          Logout
                         </button>
                       </div>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="flex items-center">
+                <div className="hidden lg:flex items-center">
                   <Link
-                    href="/login"
+                    href="/user/login"
                     className="px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-xl transition-colors flex items-center gap-3"
                   >
-                    <LogIn />
+                    <LogIn className="w-4 h-4" />
                     Login
                   </Link>
                   <Link
-                    href="/login"
+                    href="user/register"
                     className="px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-xl transition-colors flex items-center gap-3"
                   >
-                    <UserRoundPlus />
+                    <UserRoundPlus className="w-4 h-4" />
                     Register
                   </Link>
                 </div>
               )}
 
               {/* Wishlist */}
-              <div className="relative">
+              <Link href="/wishlist" className="relative">
                 <FaRegHeart className="text-2xl text-gray-600 hover:text-red-500 transition-colors cursor-pointer" />
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
                   3
                 </span>
-              </div>
+              </Link>
 
               {/* Cart */}
-              <Link href='/cart' className="relative">
+              <Link href="/cart" className="relative">
                 <AiOutlineShoppingCart className="text-2xl text-gray-600 hover:text-green-600 transition-colors cursor-pointer" />
                 <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                  {cart.length}
+                  {cart?.length || 0}
                 </span>
-              </Link >
+              </Link>
 
               {/* Mobile Menu Button */}
               <button
@@ -205,42 +240,82 @@ const Navbar = () => {
                 <Link
                   href="/"
                   className="px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-xl transition-colors flex items-center gap-3"
+                  onClick={closeMobileMenu}
                 >
-                  <House></House>
+                  <House className="w-4 h-4" />
                   Home
                 </Link>
                 <Link
-                  href="/about"
+                  href="/shop"
                   className="px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-xl transition-colors flex items-center gap-3"
+                  onClick={closeMobileMenu}
                 >
-                  <ShoppingBag />
+                  <ShoppingBag className="w-4 h-4" />
                   Shop
                 </Link>
                 <Link
                   href="/about"
                   className="px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-xl transition-colors flex items-center gap-3"
+                  onClick={closeMobileMenu}
                 >
-                  <FcAbout />
+                  <FcAbout className="w-4 h-4" />
                   About Us
                 </Link>
-
-                <div className="border-t border-gray-200 pt-4 mt-2 flex items-center">
+              </div>
+              
+              {isAuth ? (
+                <div className="mt-4 p-4 border-t border-gray-200">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-green-500">
+                      <img
+                        src={user.avatar || "/user-avatar.jpg"}
+                        alt="User Avatar"
+                        className="w-full h-full object-cover"
+                       
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-800">
+                        {user.name || "John Doe"}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {user.email || "john.doe@example.com"}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/dashboard"
+                    className="block px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-xl transition-colors flex items-center gap-3"
+                    onClick={closeMobileMenu}
+                  >
+                    <User className="w-4 h-4" />
+                    Dashboard
+                  </Link>
+                  <button className="w-full mt-2 px-4 py-3 text-left text-red-600 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-3">
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <div className="border-t border-gray-200 pt-4 mt-2 flex flex-col space-y-2">
                   <Link
                     href="/login"
                     className="px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-xl transition-colors flex items-center gap-3"
+                    onClick={closeMobileMenu}
                   >
-                    <LogIn />
+                    <LogIn className="w-4 h-4" />
                     Login
                   </Link>
                   <Link
-                    href="/login"
+                    href="/register"
                     className="px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-xl transition-colors flex items-center gap-3"
+                    onClick={closeMobileMenu}
                   >
-                    <UserRoundPlus />
+                    <UserRoundPlus className="w-4 h-4" />
                     Register
                   </Link>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}

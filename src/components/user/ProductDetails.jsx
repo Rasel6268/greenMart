@@ -8,25 +8,24 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useCart } from "@/Hooks/useCart";
 
-export default function ProductPage({ params }) {
+export default function ProductDetails({ id }) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const resolvedParams = React.use(params)
   const {handleAddToCart} = useCart()
-  // Fetch single product data
+ 
   const { data: product, isLoading, error } = useQuery({
-    queryKey: ['product', resolvedParams?.id],
+    queryKey: ['product', id],
     queryFn: async() => {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/${resolvedParams?.id}`)
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`)
       return res.data?.product || res.data?.data
     },
-    enabled: !!resolvedParams?.id // Only fetch if we have an ID
+    enabled: !!id 
   });
   const convertQyt = Number(quantity)
   
 
-  // Fallback data if no product is found
+  
   const productData = product || {
     name: "iPhone 16 Pro Max",
     sku: "IP16PM-256-JP",
@@ -54,7 +53,7 @@ export default function ProductPage({ params }) {
     isTopSeller: true
   };
 
-  // Generate image data from product images
+ 
   const productImages = productData.images.map((src, index) => ({
     src: src,
     label: ["Front View", "Back View", "Side View", "Detail View", "Package View"][index] || `Image ${index + 1}`
