@@ -1,5 +1,5 @@
 "use client";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "@/Hooks/useCart";
 import instance from "@/lib/instance";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";

@@ -1,6 +1,6 @@
 "use client";
 import { auth } from "@/config/firebase";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/Hooks/useAuth";
 import axios from "axios";
 import { updateProfile } from "firebase/auth";
 import React, { useState } from "react";

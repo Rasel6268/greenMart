@@ -1,7 +1,7 @@
 // components/AdminProtectedRoute.jsx
 "use client";
 
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/Hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 

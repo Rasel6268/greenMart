@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useCart } from '@/hooks/useCart';
+import { useCart } from '@/Hooks/useCart';
 
 export default function OrderSuccess() {
   const searchParams = useSearchParams();

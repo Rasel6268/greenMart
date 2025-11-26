@@ -15,7 +15,7 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/Hooks/useAuth";
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
 
 // Simple placeholder chart components

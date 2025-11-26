@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/Hooks/useAuth';
 
 const ProtectedRoute = ({ children, fallbackPath = '/user/login' }) => {
   const { user, loading } = useAuth();

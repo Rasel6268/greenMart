@@ -1,5 +1,5 @@
 'use client'
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/Hooks/useAuth';
 import api from '@/lib/api';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';

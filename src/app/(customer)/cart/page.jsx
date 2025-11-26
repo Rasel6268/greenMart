@@ -4,7 +4,7 @@ import axios from "axios";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "react-toastify";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "@/Hooks/useCart";
 import TakaIcon from "@/components/TakaIcon";
 
 export default function CartPage() {

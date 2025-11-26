@@ -16,8 +16,8 @@ import {
   User,
   LogOut,
 } from "lucide-react";
-import { useCart } from "@/hooks/useCart";
-import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/Hooks/useCart";
+import { useAuth } from "@/Hooks/useAuth";
 import { toast } from "react-toastify";
 
 const Navbar = () => {

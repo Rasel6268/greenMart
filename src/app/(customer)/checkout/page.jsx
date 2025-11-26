@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import Link from "next/link";
 import Image from "next/image";
 import axios from "axios";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "@/Hooks/useCart";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
