@@ -6,6 +6,7 @@ import Image from "next/image";
 import { toast } from "react-toastify";
 import { useCart } from "@/Hooks/useCart";
 import TakaIcon from "@/components/TakaIcon";
+import instance from "@/lib/instance";
 
 export default function CartPage() {
   const [products, setProducts] = useState([]);
@@ -44,7 +45,7 @@ export default function CartPage() {
     }
 
     try {
-      const res = await axios.get("http://localhost:3001/products");
+      const res = await instance.get('/products');
       const allProducts = res.data.products || res.data;
 
       const selectedProducts = allProducts.filter((p) =>
