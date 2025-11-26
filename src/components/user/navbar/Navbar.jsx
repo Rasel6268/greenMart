@@ -58,7 +58,7 @@ const Navbar = () => {
   return (
     <section className="bg-white shadow-lg sticky top-0 z-50">
       {/* Top Announcement Bar */}
-      <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2 px-4">
+      <div className="bg-linear-to-r from-green-500 to-emerald-600 text-white py-2 px-4">
         <div className="w-11/12 mx-auto text-center text-sm font-medium">
           🚀 Free Shipping on Orders Over $50 | 🔥 Hot Deals Live Now!
         </div>
@@ -69,11 +69,11 @@ const Navbar = () => {
           {/* Logo Section */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-linear-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-xl">GM</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                   GreenMart
                 </span>
                 <span className="text-xs text-gray-500 -mt-1">
