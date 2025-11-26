@@ -6,7 +6,7 @@ import { FaStar, FaShoppingCart, FaShare } from "react-icons/fa";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { useCart } from "@/Hooks/useCart";
+import { useCart } from "@/hooks/useCart";
 
 export default function ProductDetails({ id }) {
   const [selectedImage, setSelectedImage] = useState(0);

@@ -1,7 +1,7 @@
 // components/layout/Header.js
 "use client";
 
-import { useAuth } from "@/Hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { set } from "react-hook-form";

@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import useImageUpload from "@/Hooks/useImageUpload";
+import useImageUpload from "@/hooks/useImageUpload";
 
 const AddProduct = () => {
   const router = useRouter();

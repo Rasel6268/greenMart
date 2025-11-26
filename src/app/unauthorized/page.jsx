@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useAuth } from '@/Hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 
 const UnauthorizedPage = () => {
