@@ -31,7 +31,7 @@ export default function Header({ onMenuClick }) {
   const handleLogout = () => {
     userLogout()
      toast.success('Admin logout successfully')
-     router.push('/admin/login')
+     router.push('/login')
     setShowDropdown(false);
   };
 

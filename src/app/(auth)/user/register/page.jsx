@@ -7,6 +7,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
@@ -15,6 +16,7 @@ const RegisterPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [step, setStep] = useState(1);
   const { userRegister } = useAuth();
+  const router = useRouter()
 
   const {
     register,
@@ -29,23 +31,23 @@ const RegisterPage = () => {
 
   const password = watch("password");
 
-  // Regular email/password registration
+ 
   const onSubmit = async (data) => {
     setLoading(true);
     const { email, password, fullName, phone, street, city, zipCode } = data;
     
     try {
-      // Register user with Firebase Auth
+   
       await userRegister(email, password);
       
-      // Update profile with display name
+      
       await updateProfile(auth.currentUser, {
         displayName: fullName,
       });
 
-      // Get Firebase UID and token
+      
       const user = auth.currentUser;
-      const token = await user.getIdToken();
+      
 
       // Prepare user data for backend
       const userData = {
@@ -59,12 +61,8 @@ const RegisterPage = () => {
       };
 
       // Send to backend
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/users`, userData, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/users`, userData);
+        router.push('/profile')
       toast.success("Account created successfully! Welcome to GreenMart 🎉");
 
     } catch (err) {
@@ -101,21 +99,16 @@ const RegisterPage = () => {
         uid: user.uid,
         fullName: user.displayName || "",
         email: user.email,
-        phone: "", // Google doesn't provide phone number
+        phone: "",
         street: "",
         city: "",
         zipCode: "",
         photoURL: user.photoURL,
-        provider: "google"
       };
 
-      // Try to create user in backend
-      const token = await user.getIdToken();
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/users`, userData, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/users`, userData);
+        router.push('/profile')
 
       toast.success("Google registration successful! Welcome to GreenMart 🎉");
 
@@ -152,7 +145,7 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen from-emerald-50 to-green-100 flex items-center justify-center p-4">
-      <div className="max-w-3xl w-full">
+      <div className="w-full max-w-4xl"> {/* Extended width from max-w-3xl to max-w-4xl */}
         <div className="bg-white rounded-2xl shadow-lg p-8 border border-green-100">
           {/* Header */}
           <div className="text-center mb-8">
@@ -198,8 +191,8 @@ const RegisterPage = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Step 1: Personal Information */}
             {step === 1 && (
-              <>
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> {/* Added grid layout */}
+                <div className="md:col-span-2">
                   <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
                     Full Name *
                   </label>
@@ -325,7 +318,7 @@ const RegisterPage = () => {
                   )}
                 </div>
 
-                <div className="flex items-center">
+                <div className="md:col-span-2 flex items-center">
                   <input
                     id="newsletter"
                     type="checkbox"
@@ -336,13 +329,13 @@ const RegisterPage = () => {
                     Send me eco-friendly tips and special offers
                   </label>
                 </div>
-              </>
+              </div>
             )}
 
             {/* Step 2: Address Information */}
             {step === 2 && (
-              <>
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> {/* Enhanced grid layout */}
+                <div className="md:col-span-2">
                   <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-2">
                     Street Address *
                   </label>
@@ -360,47 +353,46 @@ const RegisterPage = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
-                      City *
-                    </label>
-                    <input
-                      id="city"
-                      type="text"
-                      {...register("city", {
-                        required: "City is required",
-                      })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 outline-none"
-                      placeholder="New York"
-                    />
-                    {errors.city && (
-                      <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-2">
-                      ZIP/Postal Code *
-                    </label>
-                    <input
-                      id="zipCode"
-                      type="text"
-                      {...register("zipCode", {
-                        required: "ZIP code is required",
-                        pattern: {
-                          value: /^[0-9]{4,6}(-[0-9]{4})?$/,
-                          message: "Invalid ZIP code",
-                        },
-                      })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 outline-none"
-                      placeholder="10001"
-                    />
-                    {errors.zipCode && (
-                      <p className="text-red-500 text-sm mt-1">{errors.zipCode.message}</p>
-                    )}
-                  </div>
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                    City *
+                  </label>
+                  <input
+                    id="city"
+                    type="text"
+                    {...register("city", {
+                      required: "City is required",
+                    })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 outline-none"
+                    placeholder="New York"
+                  />
+                  {errors.city && (
+                    <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>
+                  )}
                 </div>
-              </>
+
+                <div>
+                  <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-2">
+                    ZIP/Postal Code *
+                  </label>
+                  <input
+                    id="zipCode"
+                    type="text"
+                    {...register("zipCode", {
+                      required: "ZIP code is required",
+                      pattern: {
+                        value: /^[0-9]{4,6}(-[0-9]{4})?$/,
+                        message: "Invalid ZIP code",
+                      },
+                    })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 outline-none"
+                    placeholder="10001"
+                  />
+                  {errors.zipCode && (
+                    <p className="text-red-500 text-sm mt-1">{errors.zipCode.message}</p>
+                  )}
+                </div>
+              </div>
             )}
 
             {/* Terms and Conditions */}

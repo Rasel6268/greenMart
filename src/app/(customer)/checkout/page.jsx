@@ -8,6 +8,8 @@ import { useCart } from "@/Hooks/useCart";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from "@/Hooks/useAuth";
+import usePrice from "@/Hooks/usePrice";
 
 export default function CheckoutPage() {
   const [shippingCost, setShippingCost] = useState(0);
@@ -21,6 +23,8 @@ export default function CheckoutPage() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
+  const { getWholesalePrice } = usePrice();
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -45,6 +49,11 @@ export default function CheckoutPage() {
       paymentMethod: "cashOnDelivery",
     },
   });
+  useEffect(() => {
+    if (user?.email) {
+      setValue("email", user.email);
+    }
+  }, [user?.email, setValue]);
 
   const watchDistrict = watch("district");
   const watchUpozila = watch("upozila");
@@ -57,7 +66,9 @@ export default function CheckoutPage() {
   const selectedUpozilaName = upozilas.find(
     (u) => u._id === watchUpozila
   )?.name;
-  const deliveryTime = upozilas.find((u) => u._id === watchUpozila)?.deliveryTime;
+  const deliveryTime = upozilas.find(
+    (u) => u._id === watchUpozila
+  )?.deliveryTime;
 
   // Fetch districts from API
   useEffect(() => {
@@ -143,21 +154,35 @@ export default function CheckoutPage() {
       : { price: product.retailPrice, label: "Retail" };
   };
 
+  
+  const productinfo = products.map((p) => {
+  const tier = getWholesaleTier(p, p.quantity);
+
+  return {
+    productId: p._id,
+    name: p.name,
+    quantity: p.quantity,
+    price: tier.price,          
+    wholesaleTier: tier.label,  
+    images: p.images[0],
+  };
+});
   const createCODOrder = async (orderData) => {
     try {
       const codOrderData = {
         ...orderData,
         shippingCost,
-        products: products,
+        products: productinfo,
         total: finalPrice,
+        subtotal: totalPrice,
         discountAmount: discountAmount,
-        estimated_delivery: deliveryTime
+        estimated_delivery: deliveryTime,
       };
-      const res = await axios.post(`${baseUrl}/order/cod`, codOrderData);
+      const res = await axios.post(`${baseUrl}/orders/cod`, codOrderData);
       if (res.data.success) {
         toast.success(res.data.message);
         clearCart();
-        router.push('/order-success');
+        router.push("/order-success");
       }
     } catch (error) {
       console.error("Error creating COD order:", error);
@@ -170,7 +195,8 @@ export default function CheckoutPage() {
     try {
       const paymentData = {
         total_amount: finalPrice.toFixed(2),
-        products: products,
+        sub_total: totalPrice,
+        products: productinfo,
         product_category: "general",
         cus_name: `${orderData.firstName} ${orderData.lastName}`,
         cus_email: orderData.email,
@@ -178,7 +204,7 @@ export default function CheckoutPage() {
         cus_add2: orderData.apartment || "",
         cus_city: orderData.city,
         cus_state: selectedDistrictName || "",
-        cus_upozila: selectedUpozilaName || "", 
+        cus_upozila: selectedUpozilaName || "",
         cus_postcode: "1200",
         cus_country: "Bangladesh",
         cus_phone: orderData.phone,
@@ -187,15 +213,15 @@ export default function CheckoutPage() {
         ship_add2: orderData.apartment || "",
         ship_city: orderData.city,
         ship_state: selectedDistrictName || "",
-        ship_upozila: selectedUpozilaName || "", 
+        ship_upozila: selectedUpozilaName || "",
         ship_postcode: "1200",
         shipping_cost: shippingCost.toString(),
         discount_amount: discountAmount.toFixed(2),
         num_of_item: products.length,
         ship_country: "Bangladesh",
-        estimated_delivery: deliveryTime
+        estimated_delivery: deliveryTime,
       };
-       
+
       const response = await axios.post(
         `${baseUrl}/payment/instance`,
         paymentData
@@ -296,7 +322,6 @@ export default function CheckoutPage() {
     calculateTotal();
   }, [products]);
 
-  // Fetch products when cart changes
   useEffect(() => {
     fetchData();
   }, [cart]);
@@ -423,7 +448,9 @@ export default function CheckoutPage() {
                           required: "First name is required",
                         })}
                         className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 ${
-                          errors.firstName ? "border-red-300" : "border-gray-200"
+                          errors.firstName
+                            ? "border-red-300"
+                            : "border-gray-200"
                         }`}
                       />
                       {errors.firstName && (
@@ -458,8 +485,10 @@ export default function CheckoutPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Email Address *
                       </label>
+
                       <input
                         type="email"
+                        readOnly
                         {...register("email", {
                           required: "Email is required",
                           pattern: {
@@ -467,11 +496,12 @@ export default function CheckoutPage() {
                             message: "Invalid email address",
                           },
                         })}
-                        className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 ${
+                        className={`w-full px-4 py-3 border-2 rounded-xl bg-gray-100 cursor-not-allowed focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 ${
                           errors.email ? "border-red-300" : "border-gray-200"
                         }`}
                         placeholder="your@email.com"
                       />
+
                       {errors.email && (
                         <p className="text-red-500 text-sm mt-1">
                           {errors.email.message}
@@ -524,7 +554,9 @@ export default function CheckoutPage() {
                           })}
                           onChange={handleDistrictChange}
                           className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 ${
-                            errors.district ? "border-red-300" : "border-gray-200"
+                            errors.district
+                              ? "border-red-300"
+                              : "border-gray-200"
                           }`}
                         >
                           <option value="">Select District</option>
@@ -552,9 +584,13 @@ export default function CheckoutPage() {
                           onChange={handleUpozilaChange}
                           disabled={!watchDistrict}
                           className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 ${
-                            errors.upozila ? "border-red-300" : "border-gray-200"
+                            errors.upozila
+                              ? "border-red-300"
+                              : "border-gray-200"
                           } ${
-                            !watchDistrict ? "opacity-50 cursor-not-allowed" : ""
+                            !watchDistrict
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
                           }`}
                         >
                           <option value="">Select Upozila</option>
@@ -577,7 +613,9 @@ export default function CheckoutPage() {
                         </label>
                         <input
                           type="text"
-                          {...register("city", { required: "City is required" })}
+                          {...register("city", {
+                            required: "City is required",
+                          })}
                           className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 ${
                             errors.city ? "border-red-300" : "border-gray-200"
                           }`}
@@ -655,7 +693,9 @@ export default function CheckoutPage() {
                           <p className="text-lg font-semibold text-green-900">
                             ৳{shippingCost}
                           </p>
-                          <p className="text-sm text-green-700">Shipping cost</p>
+                          <p className="text-sm text-green-700">
+                            Shipping cost
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -663,8 +703,8 @@ export default function CheckoutPage() {
 
                   {/* COD Availability Notice */}
                   {watchUpozila &&
-                    upozilas.find((u) => u._id === watchUpozila)?.codAvailable ===
-                      false && (
+                    upozilas.find((u) => u._id === watchUpozila)
+                      ?.codAvailable === false && (
                       <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-yellow-100 rounded-lg">
@@ -713,7 +753,9 @@ export default function CheckoutPage() {
                             ? "border-green-500 bg-green-50"
                             : "border-gray-200 hover:border-green-300"
                         }`}
-                        onClick={() => handlePaymentMethodChange("cashOnDelivery")}
+                        onClick={() =>
+                          handlePaymentMethodChange("cashOnDelivery")
+                        }
                       >
                         <div className="flex items-center gap-4">
                           <input
@@ -721,7 +763,9 @@ export default function CheckoutPage() {
                             {...register("paymentMethod")}
                             value="cashOnDelivery"
                             checked={paymentMethod === "cashOnDelivery"}
-                            onChange={() => handlePaymentMethodChange("cashOnDelivery")}
+                            onChange={() =>
+                              handlePaymentMethodChange("cashOnDelivery")
+                            }
                             className="w-5 h-5 text-green-600 focus:ring-green-500"
                           />
                           <div className="flex items-center gap-3 flex-1">
@@ -768,7 +812,9 @@ export default function CheckoutPage() {
                           {...register("paymentMethod")}
                           value="sslCommerce"
                           checked={paymentMethod === "sslCommerce"}
-                          onChange={() => handlePaymentMethodChange("sslCommerce")}
+                          onChange={() =>
+                            handlePaymentMethodChange("sslCommerce")
+                          }
                           className="w-5 h-5 text-blue-600 focus:ring-blue-500"
                         />
                         <div className="flex items-center gap-3 flex-1">
@@ -858,13 +904,15 @@ export default function CheckoutPage() {
                           >
                             <div className="relative">
                               <Image
-                                src={product.images[0] || '/placeholder-image.jpg'}
+                                src={
+                                  product.images[0] || "/placeholder-image.jpg"
+                                }
                                 alt={product.name}
                                 width={60}
                                 height={60}
                                 className="rounded-lg object-cover"
                                 onError={(e) => {
-                                  e.target.src = '/placeholder-image.jpg';
+                                  e.target.src = "/placeholder-image.jpg";
                                 }}
                               />
                               <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
@@ -926,7 +974,7 @@ export default function CheckoutPage() {
                     <hr className="my-4 border-gray-200" />
 
                     {/* Total */}
-                    <div className="flex justify-between items-center py-4 bg-gradient-to-r from-green-50 to-emerald-50 -mx-6 px-6 rounded-lg">
+                    <div className="flex justify-between items-center py-4 bg-linear-to-r from-green-50 to-emerald-50 -mx-6 px-6 rounded-lg">
                       <div>
                         <span className="text-lg font-semibold text-gray-900 block">
                           Total
@@ -1008,7 +1056,7 @@ export default function CheckoutPage() {
                     <button
                       type="submit"
                       disabled={loading || paymentLoading}
-                      className="w-full mt-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      className="w-full mt-6 py-4 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       {loading || paymentLoading
                         ? "Processing..."

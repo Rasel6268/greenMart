@@ -149,7 +149,7 @@ export default function ProductDetails({ id }) {
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`flex-shrink-0 border-2 rounded-xl p-2 transition-all duration-300 hover:border-green-500 ${
+                      className={`shrink-0 border-2 rounded-xl p-2 transition-all duration-300 hover:border-green-500 ${
                         selectedImage === index 
                           ? 'border-green-500 bg-green-50' 
                           : 'border-gray-200'
@@ -306,7 +306,7 @@ export default function ProductDetails({ id }) {
                       {currentPrice < regularPrice && (
                         <div className="text-right">
                           <span className="bg-green-100 text-green-600 text-sm font-semibold px-2 py-1 rounded">
-                            Save ${(regularPrice - currentPrice) * quantity}
+                            Save ৳{(regularPrice - currentPrice) * quantity}
                           </span>
                           <p className="text-xs text-gray-500 mt-1">
                             {Math.round((1 - currentPrice/regularPrice) * 100)}% off
@@ -357,7 +357,7 @@ export default function ProductDetails({ id }) {
                     <p>🔹 Buy {productData.wholesalePricing[1].minQty}+ items to unlock wholesale pricing at ${productData.wholesalePricing[1].price} per item</p>
                   )}
                   {quantity >= 5 && quantity < 10 && productData.wholesalePricing?.[2] && (
-                    <p>🎯 Great! You're saving ${(regularPrice - currentPrice) * quantity}. Buy 10+ items for even better pricing at ${productData.wholesalePricing[2].price} per item</p>
+                    <p>Great! You're saving ${(regularPrice - currentPrice) * quantity}. Buy 10+ items for even better pricing at ${productData.wholesalePricing[2].price} per item</p>
                   )}
                   {quantity >= 10 && (
                     <p>✅ Excellent choice! You're getting the best wholesale price.</p>
@@ -389,7 +389,7 @@ export default function ProductDetails({ id }) {
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <Link
                   href="/checkout"
-                  className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-4 rounded-xl font-semibold text-center transition-all duration-300 transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-linear-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-4 rounded-xl font-semibold text-center transition-all duration-300 transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={(e) => {
                     if (productData.stock === 0) {
                       e.preventDefault();

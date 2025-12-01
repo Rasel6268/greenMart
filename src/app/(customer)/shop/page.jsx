@@ -589,12 +589,7 @@ const Shop = () => {
                           )}
                         </div>
 
-                        {/* Quick Action Overlay */}
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                          <button className="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 shadow-lg hover:shadow-xl">
-                            Quick View
-                          </button>
-                        </div>
+                       
                       </div>
 
                       {/* Product Info */}
@@ -648,12 +643,12 @@ const Shop = () => {
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-baseline gap-2">
                             <span className="text-2xl font-bold text-gray-900">
-                              ${product.retailPrice || 0}
+                               ৳{product.retailPrice || 0}
                             </span>
                             {product.regularPrice &&
                               product.regularPrice > product.retailPrice && (
                                 <span className="text-sm text-gray-500 line-through">
-                                  ${product.regularPrice}
+                                   ৳{product.regularPrice}
                                 </span>
                               )}
                           </div>

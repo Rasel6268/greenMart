@@ -1,119 +1,153 @@
 "use client";
-import React, { useState } from "react";
+import { useAuth } from "@/Hooks/useAuth";
+import instance from "@/lib/instance";
+import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
 import { 
-  FaUser, 
   FaShoppingBag, 
-  FaCreditCard, 
-  FaMapMarkerAlt,
-  FaCog,
-  FaSignOutAlt,
-  FaBell,
-  FaChevronRight,
-  FaStar,
-  FaTruck,
   FaCheckCircle,
   FaClock,
   FaTimesCircle,
   FaSearch,
-  FaBoxOpen
+  FaBoxOpen,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaEnvelope
 } from "react-icons/fa";
 
-// Demo Tracking Component with Search
+// Helper function to generate tracking steps based on order status
+const generateTrackingSteps = (order) => {
+  if (!order) return [];
+  
+  const baseSteps = [
+    { 
+      name: "Order Placed", 
+      status: "completed", 
+      date: new Date(order.createdAt).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        hour: 'numeric', 
+        minute: 'numeric' 
+      }) 
+    },
+    { 
+      name: "Payment Confirmed", 
+      status: order.payment?.status === "success" ? "completed" : "pending", 
+      date: order.payment?.status === "success" ? "Confirmed" : "Pending" 
+    },
+    { name: "Processing", status: "pending", date: "" },
+    { name: "Shipped", status: "pending", date: "" },
+    { name: "Out for Delivery", status: "pending", date: "" },
+    { name: "Delivered", status: "pending", date: "" }
+  ];
+
+  switch (order.orderStatus) {
+    case "pending":
+      baseSteps[2].status = "current";
+      baseSteps[2].date = "In progress";
+      break;
+    case "confirmed":
+      baseSteps[1].status = "completed";
+      baseSteps[2].status = "current";
+      baseSteps[2].date = "In progress";
+      break;
+    case "processing":
+      baseSteps[2].status = "completed";
+      baseSteps[3].status = "current";
+      baseSteps[3].date = "In progress";
+      break;
+    case "shipped":
+      baseSteps[2].status = "completed";
+      baseSteps[3].status = "completed";
+      baseSteps[4].status = "current";
+      baseSteps[4].date = "In progress";
+      break;
+    case "out_for_delivery":
+      baseSteps[2].status = "completed";
+      baseSteps[3].status = "completed";
+      baseSteps[4].status = "completed";
+      baseSteps[5].status = "current";
+      baseSteps[5].date = "Today";
+      break;
+    case "delivered":
+      baseSteps[1].status = "completed";
+      baseSteps[2].status = "completed";
+      baseSteps[3].status = "completed";
+      baseSteps[4].status = "completed";
+      baseSteps[5].status = "completed";
+      baseSteps[5].date = new Date(order.updatedAt).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        hour: 'numeric', 
+        minute: 'numeric' 
+      });
+      break;
+    case "cancelled":
+      return [
+        { 
+          name: "Order Placed", 
+          status: "completed", 
+          date: new Date(order.createdAt).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            hour: 'numeric', 
+            minute: 'numeric' 
+          }) 
+        },
+        { 
+          name: "Cancelled", 
+          status: "cancelled", 
+          date: new Date(order.updatedAt).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            hour: 'numeric', 
+            minute: 'numeric' 
+          }) 
+        }
+      ];
+    default:
+      return baseSteps;
+  }
+
+  return baseSteps;
+};
+
+// Helper to get estimated delivery date
+const getEstimatedDelivery = (order) => {
+  if (!order?.createdAt) return "Not available";
+  
+  const orderDate = new Date(order.createdAt);
+  const deliveryDays = order.shipping?.estimated_delivery || "1-2";
+  const maxDays = parseInt(deliveryDays.split('-').pop()) || 2;
+  
+  const deliveryDate = new Date(orderDate);
+  deliveryDate.setDate(orderDate.getDate() + maxDays);
+  
+  return deliveryDate.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+};
+
 const Tracking = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const { user } = useAuth();
 
-  const allOrders = [
-    {
-      id: "#ORD-001",
-      product: "iPhone 16 Pro Max",
-      status: "delivered",
-      steps: [
-        { name: "Order Placed", status: "completed", date: "Jan 10, 10:30 AM" },
-        { name: "Processing", status: "completed", date: "Jan 10, 2:15 PM" },
-        { name: "Shipped", status: "completed", date: "Jan 11, 9:45 AM" },
-        { name: "Out for Delivery", status: "completed", date: "Jan 12, 8:30 AM" },
-        { name: "Delivered", status: "completed", date: "Jan 12, 2:15 PM" }
-      ],
-      carrier: "UPS",
-      trackingNumber: "1Z999AA10123456784",
-      estimatedDelivery: "January 12, 2024",
-      customer: "John Doe",
-      orderDate: "2024-01-10",
-      total: 1490
+  const { data: ordersData, isLoading, error } = useQuery({
+    queryKey: ['orders', user?.email],
+    queryFn: async () => {
+      const res = await instance.get(`/orders/my_order?email=${user.email}`);
+      return res?.data?.my_order || [];
     },
-    {
-      id: "#ORD-002",
-      product: "Wireless Earbuds Pro",
-      status: "shipped",
-      steps: [
-        { name: "Order Placed", status: "completed", date: "Jan 12, 10:30 AM" },
-        { name: "Processing", status: "completed", date: "Jan 12, 2:15 PM" },
-        { name: "Shipped", status: "current", date: "Jan 13, 9:45 AM" },
-        { name: "Out for Delivery", status: "pending", date: "Expected Jan 15" },
-        { name: "Delivered", status: "pending", date: "" }
-      ],
-      carrier: "UPS",
-      trackingNumber: "1Z999AA10123456785",
-      estimatedDelivery: "January 15, 2024",
-      customer: "John Doe",
-      orderDate: "2024-01-12",
-      total: 299
-    },
-    {
-      id: "#ORD-003",
-      product: "Smart Home Bundle",
-      status: "processing",
-      steps: [
-        { name: "Order Placed", status: "completed", date: "Jan 14, 3:20 PM" },
-        { name: "Processing", status: "current", date: "In progress" },
-        { name: "Shipped", status: "pending", date: "" },
-        { name: "Out for Delivery", status: "pending", date: "" },
-        { name: "Delivered", status: "pending", date: "" }
-      ],
-      carrier: "FedEx",
-      trackingNumber: "789012345678",
-      estimatedDelivery: "January 18, 2024",
-      customer: "John Doe",
-      orderDate: "2024-01-14",
-      total: 2250
-    },
-    {
-      id: "#ORD-004",
-      product: "Gaming Laptop",
-      status: "out_for_delivery",
-      steps: [
-        { name: "Order Placed", status: "completed", date: "Jan 13, 11:15 AM" },
-        { name: "Processing", status: "completed", date: "Jan 13, 4:30 PM" },
-        { name: "Shipped", status: "completed", date: "Jan 14, 10:20 AM" },
-        { name: "Out for Delivery", status: "current", date: "Today, 8:00 AM" },
-        { name: "Delivered", status: "pending", date: "" }
-      ],
-      carrier: "DHL",
-      trackingNumber: "123456789012",
-      estimatedDelivery: "January 15, 2024",
-      customer: "John Doe",
-      orderDate: "2024-01-13",
-      total: 1899
-    },
-    {
-      id: "#ORD-005",
-      product: "Smart Watch Series 8",
-      status: "cancelled",
-      steps: [
-        { name: "Order Placed", status: "completed", date: "Jan 11, 9:45 AM" },
-        { name: "Processing", status: "completed", date: "Jan 11, 1:20 PM" },
-        { name: "Cancelled", status: "cancelled", date: "Jan 12, 10:15 AM" }
-      ],
-      carrier: "USPS",
-      trackingNumber: "9200199999999999999999",
-      estimatedDelivery: "Cancelled",
-      customer: "John Doe",
-      orderDate: "2024-01-11",
-      total: 450
-    }
-  ];
+    enabled: !!user?.email
+  });
+
+  // Ensure ordersData is always an array
+  const allOrders = Array.isArray(ordersData) ? ordersData : [];
 
   const searchOrders = (query) => {
     setIsSearching(true);
@@ -124,23 +158,45 @@ const Tracking = () => {
       return;
     }
 
-    const results = allOrders.filter(order => 
-      order.id.toLowerCase().includes(query.toLowerCase()) ||
-      order.trackingNumber.toLowerCase().includes(query.toLowerCase()) ||
-      order.product.toLowerCase().includes(query.toLowerCase()) ||
-      order.carrier.toLowerCase().includes(query.toLowerCase())
-    );
+    const results = allOrders.filter(order => {
+      if (!order) return false;
+      
+      const searchableText = [
+        order.orderId,
+        order.tran_id,
+        order._id,
+        order.customer?.name,
+        order.customer?.email,
+        ...(order.products?.map(product => product.name) || [])
+      ].filter(Boolean).join(' ').toLowerCase();
+
+      return searchableText.includes(query.toLowerCase());
+    });
 
     // Simulate API delay
     setTimeout(() => {
       setSearchResults(results);
       setIsSearching(false);
-    }, 800);
+    }, 500);
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    searchOrders(searchQuery);
+    if (searchQuery.trim()) {
+      searchOrders(searchQuery);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    
+    // Real-time search as user types
+    if (value.trim()) {
+      searchOrders(value);
+    } else {
+      setSearchResults([]);
+    }
   };
 
   const getStatusColor = (status) => {
@@ -157,31 +213,57 @@ const Tracking = () => {
     switch (status) {
       case "completed": return FaCheckCircle;
       case "current": return FaClock;
-      case "pending": return FaTimesCircle;
+      case "pending": return FaClock;
       case "cancelled": return FaTimesCircle;
-      default: return FaTimesCircle;
+      default: return FaClock;
     }
   };
 
   const getOverallStatus = (order) => {
-    switch (order.status) {
+    if (!order) return { text: "Unknown", color: "text-gray-600 bg-gray-100" };
+    
+    switch (order.orderStatus) {
       case "delivered": return { text: "Delivered", color: "text-green-600 bg-green-100" };
-      case "shipped": return { text: "Shipped", color: "text-blue-600 bg-blue-100" };
+      case "confirmed": return { text: "Confirmed", color: "text-blue-600 bg-blue-100" };
       case "processing": return { text: "Processing", color: "text-orange-600 bg-orange-100" };
       case "out_for_delivery": return { text: "Out for Delivery", color: "text-purple-600 bg-purple-100" };
       case "cancelled": return { text: "Cancelled", color: "text-red-600 bg-red-100" };
-      default: return { text: "Processing", color: "text-gray-600 bg-gray-100" };
+      default: return { text: "Pending", color: "text-gray-600 bg-gray-100" };
     }
   };
 
-  const displayOrders = searchQuery ? searchResults : [];
+  const displayOrders = searchQuery ? searchResults : "";
+
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-2xl p-12 text-center">
+        <div className="flex justify-center mb-4">
+          <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <h3 className="text-xl font-bold text-gray-800 mb-2">Loading Orders</h3>
+        <p className="text-gray-600">Fetching your order information...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-2xl p-12 text-center">
+        <FaTimesCircle className="text-6xl text-red-300 mx-auto mb-4" />
+        <h3 className="text-xl font-bold text-gray-800 mb-2">Error Loading Orders</h3>
+        <p className="text-gray-600">Unable to load your orders. Please try again later.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Search Section */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Track Your Order</h3>
-        <p className="text-gray-600 mb-6">Enter your order ID, tracking number, or product name to track your package</p>
+        <p className="text-gray-600 mb-6">
+          Enter your Order ID (e.g., ORD1764349203591R31M7Z), Transaction ID, or product name to track your package
+        </p>
         
         <form onSubmit={handleSearch} className="space-y-4">
           <div className="flex gap-4">
@@ -190,14 +272,14 @@ const Tracking = () => {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by Order ID, Tracking Number, or Product Name..."
+                onChange={handleInputChange}
+                placeholder="Enter Order ID (ORD...), Transaction ID, or Product Name..."
                 className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
             <button
               type="submit"
-              disabled={isSearching}
+              disabled={isSearching || !searchQuery.trim()}
               className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-8 py-4 rounded-xl font-semibold transition-colors flex items-center gap-2"
             >
               {isSearching ? (
@@ -208,7 +290,7 @@ const Tracking = () => {
               ) : (
                 <>
                   <FaSearch />
-                  Search
+                  Track Order
                 </>
               )}
             </button>
@@ -234,6 +316,17 @@ const Tracking = () => {
             </div>
           )}
         </form>
+
+        {/* Search Tips */}
+        <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <h4 className="font-semibold text-blue-800 mb-2">Search Tips:</h4>
+          <div className="text-sm text-blue-700 space-y-1">
+            <p>• Use your Order ID: <code className="bg-blue-100 px-1 rounded">ORD1764349203591R31M7Z</code></p>
+            <p>• Use Transaction ID: <code className="bg-blue-100 px-1 rounded">TXN1764349203591TL5XHTMOE</code></p>
+            <p>• Search by product name: "iPhone 16 Pro Max"</p>
+            <p>• Or search by your name: "Hyatt Harrell"</p>
+          </div>
+        </div>
       </div>
 
       {/* Results Section */}
@@ -245,16 +338,27 @@ const Tracking = () => {
           <h3 className="text-xl font-bold text-gray-800 mb-2">Searching Orders</h3>
           <p className="text-gray-600">Looking for orders matching your search...</p>
         </div>
-      ) : displayOrders.length === 0 && searchQuery ? (
+      ) : displayOrders.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center">
           <FaBoxOpen className="text-6xl text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-800 mb-2">No Orders Found</h3>
-          <p className="text-gray-600 mb-4">We couldn't find any orders matching "{searchQuery}"</p>
-          <div className="space-y-2 text-sm text-gray-500">
-            <p>• Check if the order ID or tracking number is correct</p>
-            <p>• Try searching by product name</p>
-            <p>• Ensure you're using the correct format</p>
-          </div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">
+            {searchQuery ? "No Orders Found" : "No Orders Yet"}
+          </h3>
+          <p className="text-gray-600 mb-4">
+            {searchQuery 
+              ? `We couldn't find any orders matching "${searchQuery}"`
+              : "You haven't placed any orders yet."
+            }
+          </p>
+          {searchQuery && (
+            <div className="space-y-2 text-sm text-gray-500 max-w-md mx-auto">
+              <p className="font-semibold">Please check:</p>
+              <p>• Is the Order ID correct? (e.g., ORD1764349203591R31M7Z)</p>
+              <p>• Try using the Transaction ID instead</p>
+              <p>• Search by product name or your name</p>
+              <p>• Ensure you're logged in with the correct account</p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
@@ -282,12 +386,16 @@ const Tracking = () => {
           )}
 
           {/* Orders List */}
-          {displayOrders.map((order, orderIndex) => {
+          {displayOrders.map((order) => {
+            if (!order) return null;
+            
             const overallStatus = getOverallStatus(order);
-            const StatusIcon = getStatusIcon(order.status);
+            const StatusIcon = getStatusIcon(order.orderStatus);
+            const trackingSteps = generateTrackingSteps(order);
+            const estimatedDelivery = getEstimatedDelivery(order);
             
             return (
-              <div key={orderIndex} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+              <div key={order._id || order.orderId} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
                 {/* Order Header */}
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
                   <div className="flex items-center gap-4">
@@ -295,16 +403,20 @@ const Tracking = () => {
                       <FaShoppingBag className="text-white text-lg" />
                     </div>
                     <div>
-                      <div className="font-bold text-gray-800 text-lg">{order.id}</div>
-                      <div className="text-gray-600">{order.product}</div>
-                      <div className="text-sm text-gray-500">Ordered on {order.orderDate}</div>
+                      <div className="font-bold text-gray-800 text-lg">{order.orderId}</div>
+                      <div className="text-gray-600">
+                        {order.products?.length || 0} item{order.products?.length > 1 ? 's' : ''}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Ordered on {new Date(order.createdAt).toLocaleDateString()}
+                      </div>
                     </div>
                   </div>
                   
                   <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                     <div className="text-sm space-y-1">
                       <div className="text-gray-500">Total Amount</div>
-                      <div className="font-bold text-gray-800">${order.total}</div>
+                      <div className="font-bold text-gray-800">${order.payment?.amount?.total || 0}</div>
                     </div>
                     <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${overallStatus.color}`}>
                       <StatusIcon className="text-sm" />
@@ -313,27 +425,62 @@ const Tracking = () => {
                   </div>
                 </div>
 
-                {/* Tracking Information */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 p-4 bg-gray-50 rounded-xl">
+                {/* Order Information Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-xl">
                   <div className="text-center">
-                    <div className="text-sm text-gray-500 mb-1">Carrier</div>
-                    <div className="font-semibold text-gray-800">{order.carrier}</div>
+                    <div className="text-sm text-gray-500 mb-1">Transaction ID</div>
+                    <div className="font-semibold text-gray-800 text-xs">{order.tran_id}</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-sm text-gray-500 mb-1">Tracking Number</div>
-                    <div className="font-semibold text-gray-800">{order.trackingNumber}</div>
+                    <div className="text-sm text-gray-500 mb-1">Payment Status</div>
+                    <div className={`font-semibold ${
+                      order.payment?.status === "success" ? "text-green-600" : 
+                      order.payment?.status === "pending" ? "text-orange-600" : "text-red-600"
+                    }`}>
+                      {order.payment?.status ? order.payment.status.charAt(0).toUpperCase() + order.payment.status.slice(1) : "Pending"}
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="text-sm text-gray-500 mb-1">Est. Delivery</div>
-                    <div className="font-semibold text-green-600">{order.estimatedDelivery}</div>
+                    <div className="font-semibold text-green-600 text-sm">{estimatedDelivery}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm text-gray-500 mb-1">Shipping Area</div>
+                    <div className="font-semibold text-gray-800 flex items-center justify-center gap-1 text-sm">
+                      <FaMapMarkerAlt className="text-red-500" />
+                      {order.shipping?.upozila}, {order.shipping?.district}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Information */}
+                <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <h4 className="font-semibold text-blue-800 mb-3">Customer Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <FaEnvelope className="text-blue-500" />
+                      <span className="text-gray-700">{order.customer?.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <FaPhone className="text-blue-500" />
+                      <span className="text-gray-700">{order.customer?.phone}</span>
+                    </div>
+                    <div className="md:col-span-2 flex items-start gap-2">
+                      <FaMapMarkerAlt className="text-blue-500 mt-1" />
+                      <span className="text-gray-700">
+                        {order.customer?.address?.street}, {order.customer?.address?.apartment && `${order.customer.address.apartment}, `}
+                        {order.customer?.address?.city}, {order.customer?.address?.district} - {order.customer?.address?.upozila}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Tracking Steps */}
-                <div className="relative">
-                  <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                <div className="relative mb-6">
+                  <h4 className="font-semibold text-gray-800 mb-4">Order Tracking</h4>
+                  <div className="absolute left-4 top-10 bottom-4 w-0.5 bg-gray-200"></div>
                   <div className="space-y-6">
-                    {order.steps.map((step, stepIndex) => {
+                    {trackingSteps.map((step, stepIndex) => {
                       const StepIcon = getStatusIcon(step.status);
                       return (
                         <div key={stepIndex} className="flex items-start gap-4">
@@ -368,32 +515,52 @@ const Tracking = () => {
                     })}
                   </div>
                 </div>
+
+                {/* Products Summary */}
+                <div className="pt-6 border-t border-gray-200">
+                  <h4 className="font-semibold text-gray-800 mb-3">Order Items</h4>
+                  <div className="space-y-3">
+                    {order.products?.map((product, index) => (
+                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={product.image} 
+                            alt={product.name}
+                            className="w-12 h-12 rounded-lg object-cover border border-gray-200"
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/48x48?text=No+Image';
+                            }}
+                          />
+                          <div>
+                            <div className="font-medium text-gray-800">{product.name}</div>
+                            <div className="text-gray-500 text-sm">Qty: {product.quantity} × ${product.price}</div>
+                          </div>
+                        </div>
+                        <div className="text-gray-800 font-medium">
+                          ${(product.price * product.quantity).toFixed(2)}
+                        </div>
+                      </div>
+                    ))}
+                    {/* Order Summary */}
+                    <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                      <div className="text-sm text-gray-600">
+                        Subtotal: ${order.payment?.amount?.subtotal}<br />
+                        Discount: -${order.payment?.amount?.discount}<br />
+                        Shipping: ${order.payment?.amount?.shipping}
+                      </div>
+                      <div className="text-lg font-bold text-gray-800">
+                        Total: ${order.payment?.amount?.total}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             );
           })}
         </div>
       )}
-
-      {/* Support Card */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-100 rounded-2xl p-6 border border-green-200">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-          <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0">
-            <FaMapMarkerAlt className="text-white text-xl" />
-          </div>
-          <div className="flex-1">
-            <h4 className="font-semibold text-gray-800">Need Help with Delivery?</h4>
-            <p className="text-gray-600">Our support team is here to help with any delivery issues or questions about your order.</p>
-          </div>
-          <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors whitespace-nowrap">
-            Contact Support
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
-
-// Rest of the dashboard components remain the same as previous implementation
-// ... (Profile, MyOrder, Payments components and main Dashboard component)
 
 export default Tracking;

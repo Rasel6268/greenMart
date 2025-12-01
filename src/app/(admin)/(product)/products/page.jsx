@@ -294,20 +294,20 @@ const ProductsTable = () => {
                       {product.isDiscountActive ? (
                         <>
                           <p className="text-gray-900 font-semibold">
-                            ${calculateDiscountedPrice(product.retailPrice, product.discountPercent).toFixed(2)}
+                            {calculateDiscountedPrice(product.retailPrice, product.discountPercent).toFixed(2)}
                           </p>
                           <p className="text-gray-500 text-sm line-through">
-                            ${product.retailPrice.toFixed(2)}
+                            ৳{product.retailPrice.toFixed(2)}
                           </p>
                         </>
                       ) : (
                         <p className="text-gray-900 font-semibold">
-                          ${product.retailPrice.toFixed(2)}
+                          ৳{product.retailPrice.toFixed(2)}
                         </p>
                       )}
                       {product.wholesalePrice && (
                         <p className="text-blue-600 text-xs">
-                          Wholesale: ${product.wholesalePrice.toFixed(2)}
+                          Wholesale: ৳{product.wholesalePrice.toFixed(2)}
                         </p>
                       )}
                     </div>

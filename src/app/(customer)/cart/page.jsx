@@ -294,7 +294,7 @@ export default function CartPage() {
 
                             <div className="text-right">
                               <p className="text-xl font-bold text-green-600">
-                                ${price}
+                                ৳{price}
                               </p>
                               <p className="text-gray-500 text-sm">per item</p>
                               <p className="text-xs text-blue-600 mt-1">
@@ -358,7 +358,7 @@ export default function CartPage() {
                             </div>
                             <div className="text-right">
                               <p className="text-lg font-semibold text-gray-900">
-                                ${subtotal.toFixed(2)}
+                                ৳{subtotal.toFixed(2)}
                               </p>
                               <p className="text-gray-500 text-sm">total</p>
                             </div>
@@ -421,7 +421,7 @@ export default function CartPage() {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-gray-900">
-                            ${subtotal.toFixed(2)}
+                          ৳{subtotal.toFixed(2)}
                           </p>
                           {label && (
                             <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full mt-1">
@@ -444,7 +444,7 @@ export default function CartPage() {
                       items)
                     </span>
                     <span className="font-medium text-gray-900">
-                      ${totalPrice.toFixed(2)}
+                      ৳{totalPrice.toFixed(2)}
                     </span>
                   </div>
 
@@ -468,7 +468,7 @@ export default function CartPage() {
                         </span>
                       </div>
                       <span className="text-green-700 font-bold text-lg">
-                        -${discountAmount.toFixed(2)}
+                        -৳{discountAmount.toFixed(2)}
                       </span>
                     </div>
                     
@@ -495,7 +495,7 @@ export default function CartPage() {
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
                       <div className="flex justify-between text-sm text-blue-800 mb-2">
                         <span>
-                          Add ${(200 - totalPrice).toFixed(2)} for free
+                          Add ৳{(200 - totalPrice).toFixed(2)} for free
                           shipping!
                         </span>
                         <span>
@@ -520,7 +520,7 @@ export default function CartPage() {
                 <hr className="my-4 border-gray-200" />
 
                 {/* Total with emphasis */}
-                <div className="flex justify-between items-center py-4 bg-gradient-to-r from-green-50 to-emerald-50 -mx-6 px-6 rounded-lg">
+                <div className="flex justify-between items-center py-4 bg-linear-to-r from-green-50 to-emerald-50 -mx-6 px-6 rounded-lg">
                   <div>
                     <span className="text-lg font-semibold text-gray-900 block">
                       Total
@@ -531,7 +531,7 @@ export default function CartPage() {
                   </div>
                   <div className="text-right">
                     <span className="text-2xl font-bold text-green-600 block">
-                      ${finalPrice.toFixed(2)}
+                      ৳{finalPrice.toFixed(2)}
                     </span>
                     <span className="text-xs text-gray-500">USD</span>
                   </div>
@@ -539,7 +539,7 @@ export default function CartPage() {
                 {/* Enhanced Checkout Button */}
                 <Link
                   href="/checkout"
-                  className="group relative block w-full text-center py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold transition-all duration-300 shadow-lg shadow-green-200 hover:shadow-2xl hover:shadow-green-300 transform hover:-translate-y-1"
+                  className="group relative block w-full text-center py-4 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold transition-all duration-300 shadow-lg shadow-green-200 hover:shadow-2xl hover:shadow-green-300 transform hover:-translate-y-1"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     Proceed to Checkout

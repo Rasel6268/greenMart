@@ -58,12 +58,13 @@ export const AuthProvider = ({ children }) => {
 
     setAdminLoading(true);
     try {
-      const response = await instance.get(`/admins/${email}`);
-      if (response.data.success && response.data.data) {
-        // Check if user has admin privileges based on your data structure
-        const userData = response.data.data;
-        const isUserAdmin = userData.userType === 'admin';
+      const response = await instance.get(`/users?email=${email}`);
+      console.log(response.data)
+      
+      if (response.data.success && response.data.userData) {
         
+        const userData = response.data.userData;
+        const isUserAdmin = userData.userRole === 'admin';
         if (isUserAdmin) {
           setIsAdmin(isUserAdmin);
         } else {

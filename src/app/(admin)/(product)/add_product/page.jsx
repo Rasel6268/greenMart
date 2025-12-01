@@ -28,26 +28,26 @@ const AddProduct = () => {
     category: "",
     description: "",
     brand: "",
-    stock: 0,
-    retailPrice: 0,
-    regularPrice: 0,
-    wholesalePrice: 0,
-    discountPercent: 0,
+    stock: null,
+    retailPrice: null,
+    regularPrice: null,
+    wholesalePrice: null,
+    discountPercent: null,
     isDiscountActive: false,
     isFeatured: false,
     isNewArrival: false,
     isTopSeller: false,
     status: "active",
     importOrigin: "",
-    rating: 0,
-    reviewCount: 0,
+    rating: null,
+    reviewCount: null,
     wholesalePricing: [
-      { minQty: 1, maxQty: 4, price: 0, label: "Retail", unit: "per item", discount: false },
-      { minQty: 5, maxQty: 9, price: 0, label: "Small Bulk", unit: "per item", discount: true },
-      { minQty: 10, maxQty: 24, price: 0, label: "Medium Bulk", unit: "per item", discount: true },
-      { minQty: 25, maxQty: 49, price: 0, label: "Large Bulk", unit: "per item", discount: true },
-      { minQty: 50, maxQty: 99, price: 0, label: "Wholesale", unit: "per item", discount: true },
-      { minQty: 100, maxQty: null, price: 0, label: "Premium Wholesale", unit: "per item", discount: true },
+      { minQty: 1, maxQty: 4, price: null, label: "Retail", unit: "per item", discount: false },
+      { minQty: 5, maxQty: 9, price: null, label: "Small Bulk", unit: "per item", discount: true },
+      { minQty: 10, maxQty: 24, price: null, label: "Medium Bulk", unit: "per item", discount: true },
+      { minQty: 25, maxQty: 49, price: null, label: "Large Bulk", unit: "per item", discount: true },
+      { minQty: 50, maxQty: 99, price: null, label: "Wholesale", unit: "per item", discount: true },
+      { minQty: 100, maxQty: null, price: null, label: "Premium Wholesale", unit: "per item", discount: true },
     ]
   });
 
@@ -79,7 +79,7 @@ const AddProduct = () => {
     }
   })
 
-  // Handle form input changes
+  
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -201,7 +201,7 @@ const AddProduct = () => {
       const productData = {
         ...formData,
         images: uploadImages.map(image => image.secure_url),
-        // Set regularPrice to retailPrice if not explicitly set
+      
         regularPrice: formData.regularPrice || formData.retailPrice,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -458,14 +458,14 @@ const AddProduct = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Price ($)
+                        Price (৳)
                       </label>
                       <input
                         type="number"
                         value={tier.price}
                         onChange={(e) => handleWholesalePricingChange(index, 'price', e.target.value)}
                         min="0"
-                        step="0.01"
+              
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -582,7 +582,7 @@ const AddProduct = () => {
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                    $
+                    ৳
                   </span>
                   <input
                     type="number"
@@ -590,7 +590,7 @@ const AddProduct = () => {
                     value={formData.retailPrice}
                     onChange={handleNumberChange}
                     min="0"
-                    step="0.01"
+                   
                     className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="0.00"
                     required
@@ -605,7 +605,7 @@ const AddProduct = () => {
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                    $
+                    ৳
                   </span>
                   <input
                     type="number"
@@ -613,7 +613,7 @@ const AddProduct = () => {
                     value={formData.regularPrice}
                     onChange={handleNumberChange}
                     min="0"
-                    step="0.01"
+                   
                     className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="0.00"
                   />
@@ -696,9 +696,9 @@ const AddProduct = () => {
                     name="rating"
                     value={formData.rating}
                     onChange={handleNumberChange}
-                    min="0"
+                    min=""
                     max="5"
-                    step="0.1"
+                  
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="0.0"
                   />
@@ -713,7 +713,7 @@ const AddProduct = () => {
                     name="reviewCount"
                     value={formData.reviewCount}
                     onChange={handleNumberChange}
-                    min="0"
+                    min=""
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="0"
                   />

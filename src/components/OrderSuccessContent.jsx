@@ -1,5 +1,6 @@
 "use client";
 import { useSearchParams } from "next/navigation";
+import { useCart } from "@/Hooks/useCart";
 import React from "react";
 
 const OrderSuccessContent = () => {
@@ -11,17 +12,12 @@ const OrderSuccessContent = () => {
   const status = searchParams.get("status");
   const clear_cart = searchParams.get("clear_cart");
   const card_category = searchParams.get("card_category");
+  const {clearCart} = useCart()
 
-  console.log("Transaction ID:", tran_id);
-  console.log("All params:", {
-    tran_id,
-    val_id,
-    amount,
-    status,
-    clear_cart,
-    card_category
-  });
-
+ 
+  if (clear_cart === 'true') {
+  clearCart();
+}
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-2xl">
@@ -107,26 +103,6 @@ const OrderSuccessContent = () => {
               </div>
             )}
           </div>
-          
-          {5 > 0 && (
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Order Summary</h3>
-              <div className="space-y-3">
-                {[1,2,3,4,5].map((product, index) => (
-                  <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <div className="flex items-center space-x-3">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      <span className="text-gray-700">Product {index + 1}</span>
-                      <span className="text-gray-500 text-sm">x 1</span>
-                    </div>
-                    <span className="text-gray-900 font-medium">
-                      ৳ 5654
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Additional Info */}

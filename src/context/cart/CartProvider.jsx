@@ -77,10 +77,12 @@ const CartProvider = ({ children }) => {
 
   // 🧹 Clear all
   const clearCart = () => {
+  if (typeof window !== "undefined") {
     localStorage.removeItem("cart");
-    setCart([]);
-    toast.info("Cart cleared");
-  };
+  }
+  setCart([]);
+  toast.info("Cart cleared");
+};
 
   const data = {
     cart,

@@ -13,8 +13,10 @@ import { FaBangladeshiTakaSign } from "react-icons/fa6";
 import instance from "@/lib/instance";
 import BannerSlider from "@/components/BannerSwiper";
 import Image from "next/image";
+import { useCart } from "@/Hooks/useCart";
 
 const Page = () => {
+  const { addToCart, handleAddToCart } = useCart();
   const { data: products } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
@@ -41,6 +43,8 @@ const Page = () => {
     ?.filter((product) => product.isTopSeller === true)
     ?.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     ?.slice(0, 8);
+
+  console.log(isTopSeller);
 
   return (
     <section className="bg-gray-50">
@@ -280,9 +284,35 @@ const Page = () => {
                     </div>
                   </div>
 
-                  <button className="w-full bg-linear-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg flex items-center justify-center gap-2">
-                    <FaShoppingCart />
-                    Add to Cart
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleAddToCart(item._id, 1, item.name);
+                    }}
+                    disabled={(item.stock || 0) === 0}
+                    className={`w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                      (item.stock || 0) === 0
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-linear-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 hover:shadow-lg transform hover:-translate-y-0.5"
+                    }`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    {(item.stock || 0) === 0
+                      ? "Out of Stock"
+                      : "Add to Cart"}
                   </button>
                 </div>
               </div>
@@ -311,7 +341,7 @@ const Page = () => {
               New Arrivals
             </h2>
             <Link
-              href="/new-arrivals"
+              href="/shop"
               className="flex items-center text-green-600 gap-2 font-semibold hover:text-green-700 transition-colors group"
             >
               View All
@@ -367,9 +397,12 @@ const Page = () => {
                     {isNew2?.shortDescription ||
                       "Featured woman collections that give you another vibe."}
                   </p>
-                  <button className="bg-white text-purple-600 px-5 py-2 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 w-fit">
+                  <Link
+                    href="/shop"
+                    className="bg-white text-purple-600 px-5 py-2 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 w-fit"
+                  >
                     Shop Now
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -413,9 +446,12 @@ const Page = () => {
                   <p className="text-gray-600 text-sm mb-4">
                     {isNew4?.category || "Premium sound quality"}
                   </p>
-                  <button className="text-green-600 font-semibold hover:text-green-700 transition-colors">
+                  <Link
+                    href="/shop"
+                    className="text-green-600 font-semibold hover:text-green-700 transition-colors"
+                  >
                     Shop Now →
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -426,14 +462,10 @@ const Page = () => {
       {/* Top Sells and Top Ratings Section */}
       <div className="py-12 md:py-16">
         <div className="w-11/12 mx-auto px-4">
-          <div className="flex gap-4 mb-8 overflow-x-auto pb-2">
-            <button className="bg-linear-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
-              Best Sells
-            </button>
-            <button className="bg-white text-green-600 border border-green-600 px-6 py-3 rounded-xl font-semibold hover:bg-green-600 hover:text-white transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
-              Top Ratings
-            </button>
-          </div>
+          <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-3 text-gray-800 mb-8">
+            <span className="w-3 h-8 bg-linear-to-b from-green-500 to-emerald-600 rounded-full"></span>
+            Best selling product
+          </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {isTopSeller?.map((product, index) => (
@@ -442,13 +474,10 @@ const Page = () => {
                 className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl transition-all duration-300 group"
               >
                 <div className="relative">
-                  <image
-                    src={product.images?.[0] || "/placeholder-product.png"}
+                  <img
+                    src={product.images[0]}
                     alt={product.name}
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={(e) => {
-                      e.target.src = "/placeholder-product.png";
-                    }}
                   />
                 </div>
 
@@ -487,10 +516,22 @@ const Page = () => {
                   </div>
 
                   <div className="flex gap-3">
-                    <button className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
+                    <button 
+                     onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAddToCart(product._id, 1, product.name);
+                          }}
+                     disabled={(product.stock || 0) === 0}
+                    className={`flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 cursor-pointer ${
+                       (product.stock || 0) === 0
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-linear-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 hover:shadow-lg transform hover:-translate-y-0.5"
+                    }`}>
                       <FaShoppingCart />
                       Add to cart
                     </button>
+
                     <button className="flex-1 bg-white text-green-600 border border-green-600 py-3 rounded-xl font-semibold hover:bg-green-600 hover:text-white transition-all duration-300 flex items-center justify-center">
                       <FaRegHeart />
                     </button>
@@ -511,7 +552,7 @@ const Page = () => {
               Discount Products (2-20% OFF)
             </h2>
             <Link
-              href="/discounts"
+              href="/shop"
               className="flex items-center text-green-600 gap-2 font-semibold hover:text-green-700 transition-colors group"
             >
               View All
@@ -525,7 +566,10 @@ const Page = () => {
                 key={product._id}
                 className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl transition-all duration-300 group"
               >
-                <Link href={`/product/${product._id}`} className="block">
+                <Link
+                  href={`/product_details/${product._id}`}
+                  className="block"
+                >
                   <div className="relative">
                     <img
                       src={product.images?.[0] || "/placeholder-product.png"}

@@ -3,7 +3,7 @@ import axios from "axios";
 import { auth } from "@/config/firebase";
 
 
-// PROTECTED Axios -> Auto token
+
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {

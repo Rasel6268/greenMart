@@ -39,6 +39,7 @@ const OrdersTable = () => {
   });
 
   const orders = ordersData?.data || [];
+  console.log(orders)
 
   // Bulk update mutation
   const bulkUpdateMutation = useMutation({

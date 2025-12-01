@@ -220,7 +220,7 @@ const deleteBrand = (id) =>{
                     <tr key={brand._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="py-4 px-6">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                      <div className="w-10 h-10 bg-linear-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                         <span className="text-white font-bold text-sm">{brand.name.charAt(0).toUpperCase()}</span>
                       </div>
                       <div>

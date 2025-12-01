@@ -154,35 +154,10 @@ const Dashboard = () => {
                       {menuItems.find(item => item.case === active)?.description || 'Manage your personal information'}
                     </p>
                   </div>
-                  
-                  {/* Quick Stats */}
-                  <div className="hidden lg:flex items-center gap-4">
-                    <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                      <div className="text-2xl font-bold text-green-600">12</div>
-                      <div className="text-sm text-gray-600">Total Orders</div>
-                    </div>
-                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                      <div className="text-2xl font-bold text-blue-600">3</div>
-                      <div className="text-sm text-gray-600">Pending</div>
-                    </div>
-                  </div>
                 </div>
 
-                {/* Content */}
                 <div className="p-6 min-h-[400px]">
                   {renderContent()}
-                </div>
-
-                {/* Mobile Quick Stats */}
-                <div className="lg:hidden grid grid-cols-2 gap-4 mt-6">
-                  <div className="bg-green-50 rounded-xl p-4 border border-green-200 text-center">
-                    <div className="text-xl font-bold text-green-600">12</div>
-                    <div className="text-sm text-gray-600">Total Orders</div>
-                  </div>
-                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200 text-center">
-                    <div className="text-xl font-bold text-blue-600">3</div>
-                    <div className="text-sm text-gray-600">Pending</div>
-                  </div>
                 </div>
               </div>
             </div>
