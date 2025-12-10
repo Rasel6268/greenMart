@@ -83,7 +83,7 @@ const BannerSlider = () => {
                 alt={slide.title}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent flex items-center">
+              <div className="absolute inset-0 bg-linear-to-r from-black/50 to-transparent flex items-center">
                 <div className="text-white p-12 max-w-lg">
                   <h1 className="text-5xl font-bold mb-4">{slide.title}</h1>
                   <p className="text-xl mb-6 opacity-90">

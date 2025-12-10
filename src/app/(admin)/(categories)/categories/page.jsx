@@ -17,6 +17,7 @@ import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ShoppingLoading from "@/components/Loading/Loading";
 import { toast } from "react-toastify";
+import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
 
 const CategoriesTable = () => {
   const queryClient = useQueryClient()
@@ -65,7 +66,8 @@ const CategoriesTable = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+   <AdminProtectedRoute>
+     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
         <div>
@@ -335,6 +337,7 @@ const CategoriesTable = () => {
         </div>
       </div>
     </div>
+   </AdminProtectedRoute>
   );
 };
 

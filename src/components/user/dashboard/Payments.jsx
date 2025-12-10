@@ -1,5 +1,5 @@
 import { useAuth } from "@/Hooks/useAuth";
-import instance from "@/lib/instance";
+import apiClient from "@/lib/apiClient";
 import { useQuery } from "@tanstack/react-query";
 
 const Payments = () => {
@@ -9,7 +9,7 @@ const Payments = () => {
   const {data: transactionHistory} = useQuery({
     queryKey: ['payments',user.email],
     queryFn: async() => {
-      const res = await instance.get(`/transactions/${user.email}`)
+      const res = await apiClient.get(`/transactions/${user.email}`)
       return res.data.data
 
     }

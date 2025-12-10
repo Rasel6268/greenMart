@@ -540,22 +540,22 @@ const Dashboard = () => {
 
         {/* Quick Stats Footer */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg">
+          <div className="bg-linear-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg">
             <p className="text-sm opacity-90">Conversion Rate</p>
             <p className="text-xl sm:text-2xl font-bold mt-1">3.24%</p>
             <p className="text-xs opacity-90 mt-1">+0.5% from last week</p>
           </div>
-          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
+          <div className="bg-linear-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
             <p className="text-sm opacity-90">Avg. Order Value</p>
             <p className="text-xl sm:text-2xl font-bold mt-1">$156.80</p>
             <p className="text-xs opacity-90 mt-1">+$12.40 from last month</p>
           </div>
-          <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
+          <div className="bg-linear-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
             <p className="text-sm opacity-90">Customer Satisfaction</p>
             <p className="text-xl sm:text-2xl font-bold mt-1">94.2%</p>
             <p className="text-xs opacity-90 mt-1">Based on 284 reviews</p>
           </div>
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-lg">
+          <div className="bg-linear-to-r from-orange-500 to-orange-600 text-white p-4 rounded-lg">
             <p className="text-sm opacity-90">Inventory Alert</p>
             <p className="text-xl sm:text-2xl font-bold mt-1">12 items</p>
             <p className="text-xs opacity-90 mt-1">Low stock products</p>

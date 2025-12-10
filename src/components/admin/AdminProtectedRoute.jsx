@@ -12,7 +12,7 @@ const AdminProtectedRoute = ({ children }) => {
   useEffect(() => {
     if (!loading && !adminLoading) {
       if (!user) {
-        router.push('/admin/login');
+        router.push('/user/login');
         return;
       }
       if (!isAdmin) {

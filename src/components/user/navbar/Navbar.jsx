@@ -1,9 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import {
-  IoIosMenu,
-  IoIosClose,
-} from "react-icons/io";
+import { IoIosMenu, IoIosClose } from "react-icons/io";
 import { AiOutlineShoppingCart } from "react-icons/ai";
 import { FaRegHeart } from "react-icons/fa";
 import { FcAbout } from "react-icons/fc";
@@ -24,15 +21,18 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openUserModel, setOpenUserModel] = useState(false);
   const userModelRef = useRef(null);
-  const { user,userLogout } = useAuth();
+  const { user, userLogout } = useAuth();
   const { cart } = useCart();
-  
+
   const isAuth = !!user;
 
   // Close user model when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (userModelRef.current && !userModelRef.current.contains(event.target)) {
+      if (
+        userModelRef.current &&
+        !userModelRef.current.contains(event.target)
+      ) {
         setOpenUserModel(false);
       }
     };
@@ -51,9 +51,9 @@ const Navbar = () => {
     setIsMenuOpen(false);
   };
   const LogoutHandler = () => {
-     userLogout()
-     toast.info('Logout success')
-  }
+    userLogout();
+    toast.info("Logout success");
+  };
 
   return (
     <section className="bg-white shadow-lg sticky top-0 z-50">
@@ -68,16 +68,16 @@ const Navbar = () => {
         <div className="flex justify-between items-center py-4">
           {/* Logo Section */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-12 h-12 bg-linear-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xl">GM</span>
-              </div>
+            <Link href="/" className="flex items-center gap-1 group">
+              <img
+                src="/icon.png"
+                alt="Logo"
+                className="w-15 h-15 object-contain"
+              />
+
               <div className="flex flex-col">
                 <span className="text-2xl font-bold bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                  GreenMart
-                </span>
-                <span className="text-xs text-gray-500 -mt-1">
-                  Premium Shopping
+                  GreenStoreBD
                 </span>
               </div>
             </Link>
@@ -124,10 +124,13 @@ const Navbar = () => {
             <div className="flex items-center gap-4">
               {/* Login/User */}
               {isAuth ? (
-                <div ref={userModelRef} className="relative lg:flex cursor-pointer hidden">
+                <div
+                  ref={userModelRef}
+                  className="relative lg:flex cursor-pointer hidden"
+                >
                   <div className="w-12 h-12 border-4 border-green-500 rounded-full overflow-hidden hover:border-green-600 transition-colors cursor-pointer">
-                    <button 
-                      onClick={openUser} 
+                    <button
+                      onClick={openUser}
                       className="w-full h-full flex items-center justify-center bg-gray-100"
                     >
                       <img
@@ -141,14 +144,13 @@ const Navbar = () => {
                   {openUserModel && (
                     <div className="absolute right-0 top-14 mt-2 bg-white w-72 z-50 shadow-xl rounded-xl border border-gray-200 overflow-hidden">
                       {/* User Header */}
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 border-b border-gray-100">
+                      <div className="bg-linear-to-r from-green-50 to-emerald-50 p-4 border-b border-gray-100">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
                             <img
                               src={user.avatar || "/user-avatar.jpg"}
                               alt="User Avatar"
                               className="w-full h-full object-cover"
-                              
                             />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -174,7 +176,10 @@ const Navbar = () => {
                         </Link>
                         <div className="border-t border-gray-100 my-1"></div>
 
-                        <button onClick={LogoutHandler} className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer">
+                        <button
+                          onClick={LogoutHandler}
+                          className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer"
+                        >
                           <LogOut className="w-5 h-5" />
                           Logout
                         </button>
@@ -262,7 +267,7 @@ const Navbar = () => {
                   About Us
                 </Link>
               </div>
-              
+
               {isAuth ? (
                 <div className="mt-4 p-4 border-t border-gray-200">
                   <div className="flex items-center gap-3 mb-3">
@@ -271,7 +276,6 @@ const Navbar = () => {
                         src={user.avatar || "/user-avatar.jpg"}
                         alt="User Avatar"
                         className="w-full h-full object-cover"
-                       
                       />
                     </div>
                     <div>

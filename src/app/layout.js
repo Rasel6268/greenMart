@@ -18,13 +18,13 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: {
-    default: "GreenMart | Wholesale & Retail eCommerce Platform",
-    template: "%s | GreenMart",
+    default: "GreenStoreBD | Wholesale & Retail eCommerce Platform",
+    template: "%s | GreenStoreBD",
   },
   description:
-    "GreenMart is your trusted eCommerce platform for wholesale and retail shopping. We import quality products directly from China to offer unbeatable prices on electronics, fashion, and more.",
+    "GreenStoreBD is your trusted eCommerce platform for wholesale and retail shopping. We import quality products directly from China to offer unbeatable prices on electronics, fashion, and more.",
   keywords: [
-    "GreenMart",
+    "GreenStoreBD",
     "wholesale products",
     "retail shopping",
     "buy from China",
@@ -34,22 +34,28 @@ export const metadata = {
     "cheap wholesale",
     "eCommerce Bangladesh",
   ],
-  authors: [{ name: "GreenMart Team", url: "https://globalmart.com" }],
+  authors: [{ name: "GreenStoreBD Team", url: "https://greenstorebd.com" }],
   creator: "Web Dev with Rasel",
-  publisher: "GreenMart Ltd.",
-  metadataBase: new URL("https://greenmart.com"),
+  publisher: "GreenStoreBD Ltd.",
+  metadataBase: new URL("https://greenstorebd.com"),
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
+
   openGraph: {
-    title: "GreenMart — Buy Wholesale & Retail Products from China",
+    title: "GreenStoreBD — Buy Wholesale & Retail Products from China",
     description:
-      "Shop high-quality wholesale and retail products directly imported from China. Save more with GreenMart — your trusted online marketplace.",
-    url: "https://greenmart.com",
-    siteName: "GreenMart",
+      "Shop high-quality wholesale and retail products directly imported from China. Save more with GreenStoreBD — your trusted online marketplace.",
+    url: "https://greenstorebd.com",
+    siteName: "GreenStoreBD",
     images: [
       {
-        url: "https://greenmart.com/og-image.jpg",
+        url: "/icon.png",
         width: 1200,
         height: 630,
-        alt: "GreenMart eCommerce platform",
+        alt: "GreenStoreBD eCommerce platform",
       },
     ],
     locale: "en_US",
@@ -57,14 +63,14 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "GreenMart | Wholesale & Retail eCommerce Platform",
+    title: "GreenStoreBD | Wholesale & Retail eCommerce Platform",
     description:
-      "Buy quality wholesale and retail products from China at unbeatable prices. Explore GreenMart today.",
-    images: ["https://greenmart.com/twitter-card.jpg"],
+      "Buy quality wholesale and retail products from China at unbeatable prices. Explore GreenStoreBD today.",
+    images: ["/icon.png"],
     creator: "@greenmart",
   },
   alternates: {
-    canonical: "https://greenmart.com",
+    canonical: "https://greenstorebd.com",
   },
   category: "eCommerce",
 };

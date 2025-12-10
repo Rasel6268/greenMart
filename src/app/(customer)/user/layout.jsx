@@ -42,7 +42,6 @@ const UserLayout = ({ children }) => {
       </div>
 
       <div className="flex">
-        {/* Sidebar - Hidden on mobile by default, always visible on desktop */}
         <div
           className={`
             fixed lg:static inset-y-0 left-0 z-30

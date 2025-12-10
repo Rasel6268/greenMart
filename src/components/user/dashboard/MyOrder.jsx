@@ -1,4 +1,5 @@
 import { useAuth } from "@/Hooks/useAuth";
+import apiClient from "@/lib/apiClient";
 import instance from "@/lib/instance";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
@@ -27,7 +28,7 @@ const MyOrder = () => {
     queryKey: ["myOrder", user?.email, currentPage],
     enabled: !!user?.email,
     queryFn: async () => {
-      const res = await instance.get(
+      const res = await apiClient.get(
         `/orders/my_order?email=${user.email}&page=${currentPage}&limit=${ITEMS_PER_PAGE}`
       );
       return res?.data || {};
@@ -122,7 +123,6 @@ const MyOrder = () => {
         return { text: "Pending", color: "text-gray-600" };
     }
   };
-  console.log(getPaymentStatus)
 
   const canCancelOrder = (order) => {
     return order.orderStatus === "pending" || order.orderStatus === "confirmed";

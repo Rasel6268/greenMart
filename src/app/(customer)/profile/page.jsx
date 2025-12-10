@@ -67,7 +67,7 @@ const Dashboard = () => {
 
   return (
     <ProtectedRoute>
-       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50 py-8">
+       <div className="min-h-screen bg-linear-to-br from-gray-50 to-green-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
@@ -78,11 +78,11 @@ const Dashboard = () => {
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden ">
           <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[600px]">
             {/* Sidebar Navigation */}
-            <div className="lg:col-span-3 bg-gradient-to-b from-green-50 to-emerald-100 border-r border-gray-200 lg:block md:block hidden">
+            <div className="lg:col-span-3 bg-linear-to-b from-green-50 to-emerald-100 border-r border-gray-200 lg:block md:block hidden">
               {/* User Profile Summary */}
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <div className="w-16 h-16 bg-linear-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
                     <span className="text-white font-bold text-xl">JD</span>
                   </div>
                   <div>

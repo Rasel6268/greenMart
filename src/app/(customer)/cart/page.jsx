@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { toast } from "react-toastify";
 import { useCart } from "@/Hooks/useCart";
-import TakaIcon from "@/components/TakaIcon";
 import instance from "@/lib/instance";
 
 export default function CartPage() {

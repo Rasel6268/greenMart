@@ -7,6 +7,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useCart } from "@/Hooks/useCart";
+import instance from "@/lib/instance";
 
 export default function ProductDetails({ id }) {
   const [selectedImage, setSelectedImage] = useState(0);
@@ -17,7 +18,7 @@ export default function ProductDetails({ id }) {
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', id],
     queryFn: async() => {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`)
+      const res = await instance(`/products/${id}`)
       return res.data?.product || res.data?.data
     },
     enabled: !!id 

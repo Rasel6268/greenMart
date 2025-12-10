@@ -1,5 +1,6 @@
 "use client";
 import { useAuth } from "@/Hooks/useAuth";
+import apiClient from "@/lib/apiClient";
 import instance from "@/lib/instance";
 import { useQuery, useQueryClient,useMutation } from "@tanstack/react-query";
 import React, { useState, useEffect } from "react";
@@ -21,7 +22,7 @@ const Profile = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["profile", user?.email],
     queryFn: async () => {
-      const res = await instance.get(`/users?email=${user.email}`);
+      const res = await apiClient.get(`/users?email=${user.email}`);
       return res.data.userData;
     },
     enabled: !!user,

@@ -11,7 +11,7 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { auth } from "@/config/firebase";
-import api from "@/lib/api";
+import api from "@/lib/apiClient";
 import { AuthContext } from "./AuthContext";
 import instance from "@/lib/instance";
 

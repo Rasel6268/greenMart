@@ -1,7 +1,7 @@
 "use client";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "@/Hooks/useCart";
-import React from "react";
+import React, { useEffect } from "react";
 
 const OrderSuccessContent = () => {
   const searchParams = useSearchParams();
@@ -12,12 +12,15 @@ const OrderSuccessContent = () => {
   const status = searchParams.get("status");
   const clear_cart = searchParams.get("clear_cart");
   const card_category = searchParams.get("card_category");
-  const {clearCart} = useCart()
 
- 
-  if (clear_cart === 'true') {
-  clearCart();
-}
+  const { clearCart } = useCart();
+
+  useEffect(() => {
+    if (clear_cart === "true") {
+      clearCart();
+    }
+  }, [clear_cart, clearCart]);
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-2xl">
@@ -44,27 +47,25 @@ const OrderSuccessContent = () => {
             Thank you for your purchase. Your order has been confirmed.
           </p>
         </div>
+
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Order Details
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Order Details</h2>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Transaction ID
               </label>
-              <p className="text-gray-900 font-medium">
-                {tran_id || "74543563"}
-              </p>
+              <p className="text-gray-900 font-medium">{tran_id || "N/A"}</p>
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Validation ID
               </label>
-              <p className="text-gray-900 font-medium">
-                {val_id || "N/A"}
-              </p>
+              <p className="text-gray-900 font-medium">{val_id || "N/A"}</p>
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Payment Method
@@ -73,41 +74,48 @@ const OrderSuccessContent = () => {
                 {card_category ? `${card_category.toUpperCase()} Card` : "Online"}
               </p>
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Amount Paid
               </label>
-              <p className="text-green-600 font-bold text-lg">
-                ৳{amount || "4546"}
-              </p>
+              <p className="text-green-600 font-bold text-lg">৳{amount || "0"}</p>
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Status
               </label>
-              <p className={`font-medium ${
-                status === 'success' ? 'text-green-600' : 
-                status === 'failed' ? 'text-red-600' : 'text-yellow-600'
-              }`}>
-                {status ? status.toUpperCase() : 'SUCCESS'}
+              <p
+                className={`font-medium ${
+                  status === "success"
+                    ? "text-green-600"
+                    : status === "failed"
+                    ? "text-red-600"
+                    : "text-yellow-600"
+                }`}
+              >
+                {status ? status.toUpperCase() : "SUCCESS"}
               </p>
             </div>
+
             {clear_cart && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Cart Cleared
                 </label>
                 <p className="text-gray-900 font-medium">
-                  {clear_cart === 'true' ? 'Yes' : 'No'}
+                  {clear_cart === "true" ? "Yes" : "No"}
                 </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Additional Info */}
         <div className="bg-blue-50 rounded-2xl border border-blue-200 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-3">What's Next?</h3>
+          <h3 className="text-lg font-semibold text-blue-900 mb-3">
+            What's Next?
+          </h3>
           <ul className="space-y-2 text-blue-800">
             <li className="flex items-center">
               <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

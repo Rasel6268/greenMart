@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import Swal from 'sweetalert2';
+import apiClient from "@/lib/apiClient";
 
 const OrdersTable = () => {
   const [selectedOrders, setSelectedOrders] = useState([]);
@@ -33,7 +34,7 @@ const OrdersTable = () => {
   } = useQuery({
     queryKey: ["orders"],
     queryFn: async () => {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/orders`);
+      const res = await apiClient.get("/orders");
       return res.data;
     },
   });

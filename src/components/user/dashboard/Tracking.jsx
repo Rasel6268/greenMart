@@ -1,5 +1,6 @@
 "use client";
 import { useAuth } from "@/Hooks/useAuth";
+import apiClient from "@/lib/apiClient";
 import instance from "@/lib/instance";
 import { useQuery } from "@tanstack/react-query";
 import React, { useState, useEffect } from "react";
@@ -140,7 +141,7 @@ const Tracking = () => {
   const { data: ordersData, isLoading, error } = useQuery({
     queryKey: ['orders', user?.email],
     queryFn: async () => {
-      const res = await instance.get(`/orders/my_order?email=${user.email}`);
+      const res = await apiClient.get(`/orders/my_order?email=${user.email}`);
       return res?.data?.my_order || [];
     },
     enabled: !!user?.email
