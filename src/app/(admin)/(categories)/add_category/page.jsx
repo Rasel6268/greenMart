@@ -6,8 +6,11 @@ import Link from "next/link";
 import axios from "axios";
 import { toast } from "react-toastify";
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
+import apiClient from "@/lib/apiClient";
+import { useRouter } from "next/navigation";
 
 const AddBrand = () => {
+  const route = useRouter()
   // ✅ useForm hook setup
   const {
     register,
@@ -19,8 +22,8 @@ const AddBrand = () => {
   // ✅ onSubmit function
   const onSubmit = async (data) => {
     try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/categories`,
+      const res = await apiClient.post(
+        `/categories`,
         {
           ...data,
           productCount: 0,
@@ -29,6 +32,7 @@ const AddBrand = () => {
 
       if (res.data.success) {
         toast.success(res.data.message);
+         
         reset();
       } else {
         toast.error("❌ Failed to add brand.");
@@ -91,7 +95,7 @@ const AddBrand = () => {
             <button
               onClick={handleSubmit(onSubmit)}
               disabled={isSubmitting}
-              className="flex items-center space-x-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-60"
+              className="flex items-center space-x-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-60 cursor-pointer"
             >
               <Save size={18} />
               <span>{isSubmitting ? "Saving..." : "Save Category"}</span>

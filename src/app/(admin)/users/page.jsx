@@ -27,13 +27,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import Swal from "sweetalert2";
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
+import apiClient from "@/lib/apiClient";
 
 const CustomersTable = () => {
   const [activeTab, setActiveTab] = useState("regular");
   const [selectedCustomers, setSelectedCustomers] = useState([]);
   const queryClient = useQueryClient();
 
-  // Fetch all users (both regular and admin)
+  
   const {
     data: allUsers = [],
     isLoading,
@@ -41,9 +42,7 @@ const CustomersTable = () => {
   } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/users/all_users`
-      );
+      const res = await apiClient.get(`/users/all_users`);
       return res.data.users;
     },
   });
@@ -51,12 +50,9 @@ const CustomersTable = () => {
   // Mutation for updating user role
   const updateRoleMutation = useMutation({
     mutationFn: async ({ email, newRole }) => {
-      const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/users/${email}/role`,
-        {
-          role: newRole,
-        }
-      );
+      const res = await apiClient.put(`/users/${email}/role`, {
+        role: newRole,
+      });
       return res.data;
     },
     onSuccess: () => {

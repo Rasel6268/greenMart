@@ -3,12 +3,19 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
+import instance from "@/lib/instance";
+import apiClient from "@/lib/apiClient";
+import { FaEdit, FaTrash, FaEye, FaTimes } from "react-icons/fa";
+import Link from "next/link";
 
 export default function AdminShipping() {
   const [activeTab, setActiveTab] = useState("districts");
   const [loading, setLoading] = useState(false);
   const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [editingDistrict, setEditingDistrict] = useState(null);
+  const [editingUpozila, setEditingUpozila] = useState(null);
   const queryClient = useQueryClient();
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -33,17 +40,17 @@ export default function AdminShipping() {
   const { data: districts = [] } = useQuery({
     queryKey: ["districts"],
     queryFn: async () => {
-      const res = await axios.get(`${baseUrl}/district`);
+      const res = await instance.get(`/district`);
       return res.data.data;
     },
   });
-  console.log(districts);
+  
 
   // Fetch upozilas with React Query
   const { data: upozilas = [] } = useQuery({
     queryKey: ["upozilas"],
     queryFn: async () => {
-      const res = await axios.get(`${baseUrl}/upozila`);
+      const res = await instance.get(`/upozila`);
       return res.data.data;
     },
   });
@@ -51,30 +58,34 @@ export default function AdminShipping() {
   // District mutation
   const districtMutation = useMutation({
     mutationFn: async (districtData) => {
-      const res = await axios.post(`${baseUrl}/district`, districtData);
+      const res = editingDistrict 
+        ? await apiClient.put(`/district/${editingDistrict._id}`, districtData)
+        : await apiClient.post(`/district`, districtData);
       return res.data;
     },
     onSuccess: () => {
-      toast.success("District added successfully!");
+      toast.success(editingDistrict ? "District updated successfully!" : "District added successfully!");
       setDistrictForm({ name: "", division: "", deliveryAvailable: true });
+      setEditingDistrict(null);
       setActiveTab("upozilas");
-      // Invalidate and refetch districts
       queryClient.invalidateQueries(["districts"]);
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || "Error adding district");
-      console.error("Error adding district:", error);
+      toast.error(error.response?.data?.message || (editingDistrict ? "Error updating district" : "Error adding district"));
+      console.error("Error:", error);
     },
   });
 
   // Upozila mutation
   const upozilaMutation = useMutation({
     mutationFn: async (upozilaData) => {
-      const res = await axios.post(`${baseUrl}/upozila`, upozilaData);
+      const res = editingUpozila
+        ? await apiClient.put(`/upozila/${editingUpozila._id}`, upozilaData)
+        : await apiClient.post(`/upozila`, upozilaData);
       return res.data;
     },
     onSuccess: () => {
-      toast.success("Upozila added successfully!");
+      toast.success(editingUpozila ? "Upozila updated successfully!" : "Upozila added successfully!");
       setUpozilaForm({
         name: "",
         district: "",
@@ -82,12 +93,12 @@ export default function AdminShipping() {
         deliveryTime: "2-3 days",
         codAvailable: true,
       });
-      // Invalidate and refetch upozilas
+      setEditingUpozila(null);
       queryClient.invalidateQueries(["upozilas"]);
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || "Error adding upozila");
-      console.error("Error adding upozila:", error);
+      toast.error(error.response?.data?.message || (editingUpozila ? "Error updating upozila" : "Error adding upozila"));
+      console.error("Error:", error);
     },
   });
 
@@ -112,17 +123,28 @@ export default function AdminShipping() {
   // Delete District mutation
   const deleteDistrictMutation = useMutation({
     mutationFn: async (id) => {
-      const res = await axios.delete(`${baseUrl}/district/${id}`);
+      const res = await apiClient.delete(`/district/${id}`);
       return res.data;
     },
     onSuccess: () => {
-      toast.success("District deleted successfully!");
-      // Invalidate both queries
+      Swal.fire({
+        title: "Deleted!",
+        text: "District has been deleted successfully.",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false
+      });
       queryClient.invalidateQueries(["districts"]);
       queryClient.invalidateQueries(["upozilas"]);
     },
     onError: (error) => {
-      toast.error("Error deleting district");
+      Swal.fire({
+        title: "Error!",
+        text: error.response?.data?.message || "Failed to delete district. Please try again.",
+        icon: "error",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc3545"
+      });
       console.error("Error deleting district:", error);
     },
   });
@@ -130,30 +152,139 @@ export default function AdminShipping() {
   // Delete Upozila mutation
   const deleteUpozilaMutation = useMutation({
     mutationFn: async (id) => {
-      const res = await axios.delete(`${baseUrl}/upozila/${id}`);
+      const res = await apiClient.delete(`/upozila/${id}`);
       return res.data;
     },
     onSuccess: () => {
-      toast.success("Upozila deleted successfully!");
-      // Invalidate upozilas query
+      Swal.fire({
+        title: "Deleted!",
+        text: "Upozila has been deleted successfully.",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false
+      });
       queryClient.invalidateQueries(["upozilas"]);
     },
     onError: (error) => {
-      toast.error("Error deleting upozila");
+      Swal.fire({
+        title: "Error!",
+        text: error.response?.data?.message || "Failed to delete upozila. Please try again.",
+        icon: "error",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc3545"
+      });
       console.error("Error deleting upozila:", error);
     },
   });
 
-  // Delete District
-  const handleDeleteDistrict = (id) => {
-    if (!confirm("Are you sure you want to delete this district?")) return;
-    deleteDistrictMutation.mutate(id);
+  // Edit District
+  const handleEditDistrict = (district) => {
+    setEditingDistrict(district);
+    setDistrictForm({
+      name: district.name,
+      division: district.division,
+      deliveryAvailable: district.deliveryAvailable,
+    });
+    setActiveTab("districts");
   };
 
-  // Delete Upozila
-  const handleDeleteUpozila = (id) => {
-    if (!confirm("Are you sure you want to delete this upozila?")) return;
-    deleteUpozilaMutation.mutate(id);
+  // Edit Upozila
+  const handleEditUpozila = (upozila) => {
+    setEditingUpozila(upozila);
+    setUpozilaForm({
+      name: upozila.name,
+      district: upozila.district._id || upozila.district,
+      shippingCost: upozila.shippingCost,
+      deliveryTime: upozila.deliveryTime,
+      codAvailable: upozila.codAvailable,
+    });
+    setActiveTab("upozilas");
+  };
+
+  // Cancel Edit
+  const handleCancelEdit = () => {
+    if (editingDistrict) {
+      setEditingDistrict(null);
+      setDistrictForm({ name: "", division: "", deliveryAvailable: true });
+    }
+    if (editingUpozila) {
+      setEditingUpozila(null);
+      setUpozilaForm({
+        name: "",
+        district: "",
+        shippingCost: "",
+        deliveryTime: "2-3 days",
+        codAvailable: true,
+      });
+    }
+  };
+
+  // Delete District with SweetAlert2
+  const handleDeleteDistrict = async (id) => {
+    const districtName = districts.find(d => d._id === id)?.name || "this district";
+    
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      html: `<p>You are about to delete <strong>${districtName}</strong>.</p>
+             <p class="text-red-600 mt-2">This will also delete all upozilas in this district!</p>
+             <p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc3545",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+      showLoaderOnConfirm: true,
+      preConfirm: () => {
+        return deleteDistrictMutation.mutateAsync(id);
+      },
+      allowOutsideClick: () => !Swal.isLoading()
+    });
+
+    if (result.isDismissed) {
+      Swal.fire({
+        title: "Cancelled",
+        text: "District deletion was cancelled.",
+        icon: "info",
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
+  };
+
+  // Delete Upozila with SweetAlert2
+  const handleDeleteUpozila = async (id) => {
+    const upozilaData = upozilas.find(u => u._id === id);
+    if (!upozilaData) return;
+    
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      html: `<p>You are about to delete <strong>${upozilaData.name}</strong> upozila.</p>
+             <p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc3545",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+      showLoaderOnConfirm: true,
+      preConfirm: () => {
+        return deleteUpozilaMutation.mutateAsync(id);
+      },
+      allowOutsideClick: () => !Swal.isLoading()
+    });
+
+    if (result.isDismissed) {
+      Swal.fire({
+        title: "Cancelled",
+        text: "Upozila deletion was cancelled.",
+        icon: "info",
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
   };
 
   // Input change handlers
@@ -197,7 +328,10 @@ export default function AdminShipping() {
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex space-x-8">
                 <button
-                  onClick={() => setActiveTab("districts")}
+                  onClick={() => {
+                    setActiveTab("districts");
+                    handleCancelEdit();
+                  }}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === "districts"
                       ? "border-green-500 text-green-600"
@@ -207,7 +341,10 @@ export default function AdminShipping() {
                   Districts
                 </button>
                 <button
-                  onClick={() => setActiveTab("upozilas")}
+                  onClick={() => {
+                    setActiveTab("upozilas");
+                    handleCancelEdit();
+                  }}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === "upozilas"
                       ? "border-green-500 text-green-600"
@@ -226,9 +363,19 @@ export default function AdminShipping() {
               {/* District Form */}
               {activeTab === "districts" && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                    Add New District
-                  </h2>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {editingDistrict ? "Edit District" : "Add New District"}
+                    </h2>
+                    {editingDistrict && (
+                      <button
+                        onClick={handleCancelEdit}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <FaTimes className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
                   <form onSubmit={handleDistrictSubmit} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -285,15 +432,30 @@ export default function AdminShipping() {
                       </label>
                     </div>
 
-                    <button
-                      type="submit"
-                      disabled={loading || districtMutation.isLoading}
-                      className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loading || districtMutation.isLoading
-                        ? "Adding..."
-                        : "Add District"}
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        disabled={loading || districtMutation.isLoading}
+                        className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {loading || districtMutation.isLoading
+                          ? editingDistrict
+                            ? "Updating..."
+                            : "Adding..."
+                          : editingDistrict
+                          ? "Update District"
+                          : "Add District"}
+                      </button>
+                      {editingDistrict && (
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
                   </form>
                 </div>
               )}
@@ -301,9 +463,19 @@ export default function AdminShipping() {
               {/* Upozila Form */}
               {activeTab === "upozilas" && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                    Add New Upozila
-                  </h2>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {editingUpozila ? "Edit Upozila" : "Add New Upozila"}
+                    </h2>
+                    {editingUpozila && (
+                      <button
+                        onClick={handleCancelEdit}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <FaTimes className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
                   <form onSubmit={handleUpozilaSubmit} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -392,15 +564,30 @@ export default function AdminShipping() {
                       </label>
                     </div>
 
-                    <button
-                      type="submit"
-                      disabled={loading || upozilaMutation.isLoading}
-                      className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loading || upozilaMutation.isLoading
-                        ? "Adding..."
-                        : "Add Upozila"}
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        disabled={loading || upozilaMutation.isLoading}
+                        className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {loading || upozilaMutation.isLoading
+                          ? editingUpozila
+                            ? "Updating..."
+                            : "Adding..."
+                          : editingUpozila
+                          ? "Update Upozila"
+                          : "Add Upozila"}
+                      </button>
+                      {editingUpozila && (
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
                   </form>
                 </div>
               )}
@@ -440,7 +627,6 @@ export default function AdminShipping() {
                       </thead>
                       <tbody>
                         {districts.map((district) => {
-                          console.log(district);
                           return (
                             <tr
                               key={district._id}
@@ -468,15 +654,26 @@ export default function AdminShipping() {
                                 </span>
                               </td>
                               <td className="py-3 px-4">
-                                <button
-                                  onClick={() =>
-                                    handleDeleteDistrict(district._id)
-                                  }
-                                  disabled={deleteDistrictMutation.isLoading}
-                                  className="text-red-600 hover:text-red-800 text-sm font-medium transition-colors disabled:opacity-50"
-                                >
-                                  Delete
-                                </button>
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    onClick={() => handleEditDistrict(district)}
+                                    className="flex items-center gap-2 text-green-600 hover:text-green-800 text-sm font-medium transition-colors hover:bg-green-50 px-3 py-1.5 rounded-lg"
+                                    title="Edit"
+                                  >
+                                    <FaEdit className="w-4 h-4" />
+                                    
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteDistrict(district._id)}
+                                    disabled={deleteDistrictMutation.isLoading}
+                                    className="flex items-center gap-2 text-red-600 hover:text-red-800 text-sm font-medium transition-colors hover:bg-red-50 px-3 py-1.5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="Delete"
+                                  >
+                                    <FaTrash className="w-4 h-4" />
+                                    
+                                  </button>
+                                 
+                                </div>
                               </td>
                             </tr>
                           );
@@ -583,13 +780,26 @@ export default function AdminShipping() {
                               </span>
                             </td>
                             <td className="py-3 px-4">
-                              <button
-                                onClick={() => handleDeleteUpozila(upozila._id)}
-                                disabled={deleteUpozilaMutation.isLoading}
-                                className="text-red-600 hover:text-red-800 text-sm font-medium transition-colors disabled:opacity-50"
-                              >
-                                Delete
-                              </button>
+                              <div className="flex items-center gap-3">
+                                <button
+                                  onClick={() => handleEditUpozila(upozila)}
+                                  className="flex items-center gap-2 text-green-600 hover:text-green-800 text-sm font-medium transition-colors hover:bg-green-50 px-3 py-1.5 rounded-lg"
+                                  title="Edit"
+                                >
+                                  <FaEdit className="w-4 h-4" />
+                                  
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUpozila(upozila._id)}
+                                  disabled={deleteUpozilaMutation.isLoading}
+                                  className="flex items-center gap-2 text-red-600 hover:text-red-800 text-sm font-medium transition-colors hover:bg-red-50 px-3 py-1.5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Delete"
+                                >
+                                  <FaTrash className="w-4 h-4" />
+                                  
+                                </button>
+                                
+                              </div>
                             </td>
                           </tr>
                         ))}

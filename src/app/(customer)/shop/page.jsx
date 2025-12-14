@@ -7,7 +7,7 @@ export const metadata = {
   openGraph: {
     title: 'Shop',
     description: 'Browse and shop from our wide range of products',
-    url: 'https://yourwebsite.com/shop',
+    url: 'https://greenstorebd.com/shop',
     type: 'website',
   },
 };

@@ -14,6 +14,7 @@ import { auth } from "@/config/firebase";
 import api from "@/lib/apiClient";
 import { AuthContext } from "./AuthContext";
 import instance from "@/lib/instance";
+import apiClient from "@/lib/apiClient";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -58,8 +59,8 @@ export const AuthProvider = ({ children }) => {
 
     setAdminLoading(true);
     try {
-      const response = await instance.get(`/users?email=${email}`);
-      console.log(response.data)
+      const response = await apiClient.get(`/users?email=${email}`);
+      
       
       if (response.data.success && response.data.userData) {
         

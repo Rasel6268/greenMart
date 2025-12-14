@@ -7,7 +7,6 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-
 apiClient.interceptors.request.use(
   async (config) => {
     try {
@@ -26,19 +25,21 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-
 apiClient.interceptors.response.use(
   (res) => res,
   async (err) => {
     const status = err?.response?.status;
 
     if (status === 401 && typeof window !== "undefined") {
-      try { await auth.signOut(); } catch {}
-      window.location.href = "/login";
+      try {
+        await auth.signOut();
+      } catch {}
+      window.location.href = "/user/login";
     }
 
     return Promise.reject(err);
   }
 );
+
 
 export default apiClient;

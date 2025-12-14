@@ -8,14 +8,13 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import useImageUpload from "@/Hooks/useImageUpload";
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
+import apiClient from "@/lib/apiClient";
+import instance from "@/lib/instance";
 
 const AddProduct = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const { uploadImages, imageHandler } = useImageUpload();
-  const base_url = process.env.NEXT_PUBLIC_API_URL;
-
-  // Form state
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -91,7 +90,7 @@ const AddProduct = () => {
   const { data: categories } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const res = await axios.get(`${base_url}/categories`);
+      const res = await instance.get(`/categories`);
       return res.data.data;
     },
   });
@@ -99,14 +98,14 @@ const AddProduct = () => {
   const { data: brands } = useQuery({
     queryKey: ["brands"],
     queryFn: async () => {
-      const res = await axios.get(`${base_url}/brands`);
+      const res = await instance.get(`/brands`);
       return res.data.data;
     },
   });
 
   const createProductMutation = useMutation({
     mutationFn: async (productData) => {
-      const res = await axios.post(`${base_url}/products`, productData);
+      const res = await apiClient.post(`/products`, productData);
       return res.data;
     },
     onSuccess: () => {

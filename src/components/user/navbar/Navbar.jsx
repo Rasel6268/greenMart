@@ -23,7 +23,8 @@ const Navbar = () => {
   const userModelRef = useRef(null);
   const { user, userLogout } = useAuth();
   const { cart } = useCart();
-
+ 
+ 
   const isAuth = !!user;
 
   // Close user model when clicking outside
@@ -134,7 +135,7 @@ const Navbar = () => {
                       className="w-full h-full flex items-center justify-center bg-gray-100"
                     >
                       <img
-                        src={user.avatar || "/user-avatar.jpg"}
+                        src={user?.photoURL || "/user-avatar.jpg"}
                         alt="User Avatar"
                         className="w-full h-full object-cover cursor-pointer"
                       />
@@ -148,7 +149,7 @@ const Navbar = () => {
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
                             <img
-                              src={user.avatar || "/user-avatar.jpg"}
+                              src={user?.photoURL || "/user-avatar.jpg"}
                               alt="User Avatar"
                               className="w-full h-full object-cover"
                             />
@@ -165,15 +166,27 @@ const Navbar = () => {
                       </div>
 
                       {/* Menu Items */}
+
+                      
                       <div className="py-2">
-                        <Link
-                          href="/profile"
+                        {
+                          isAuth ? ( <Link
+                          href="/dashboard"
                           className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
                           onClick={() => setOpenUserModel(false)}
                         >
                           <User className="w-5 h-5 text-gray-400" />
                           <span>Dashboard</span>
-                        </Link>
+                        </Link>) : ( <Link
+                          href="/profile"
+                          className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
+                          onClick={() => setOpenUserModel(false)}
+                        >
+                          <User className="w-5 h-5 text-gray-400" />
+                          <span>Profile</span>
+                        </Link> )
+                        }
+                       
                         <div className="border-t border-gray-100 my-1"></div>
 
                         <button

@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/Hooks/useAuth";
 import usePrice from "@/Hooks/usePrice";
+import instance from "@/lib/instance";
 
 export default function CheckoutPage() {
   const [shippingCost, setShippingCost] = useState(0);
@@ -74,7 +75,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     const fetchDistricts = async () => {
       try {
-        const response = await axios.get(`${baseUrl}/district/all`);
+        const response = await instance.get(`/district/all`);
         setDistricts(response.data.data);
       } catch (error) {
         console.error("Error fetching districts:", error);

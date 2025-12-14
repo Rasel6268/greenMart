@@ -278,7 +278,7 @@ export default function ProductDetails({ id }) {
                           )}
                         </div>
                         <div className="flex items-baseline gap-1">
-                          <span className="text-lg font-bold text-gray-800">${tier.price}</span>
+                         <span className="text-lg font-bold text-gray-800">৳{tier.price}</span>
                           <span className="text-xs text-gray-500">{tier.unit}</span>
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
@@ -297,10 +297,10 @@ export default function ProductDetails({ id }) {
                       <div>
                         <span className="text-sm text-gray-600">Your Price for {quantity} item{quantity > 1 ? 's' : ''}:</span>
                         <div className="flex items-baseline gap-2 mt-1">
-                          <span className="text-2xl font-bold text-green-600">${currentPrice}</span>
+                          <span className="text-2xl font-bold text-green-600">৳{currentPrice}</span>
                           <span className="text-sm text-gray-500">per item</span>
                           {currentPrice < regularPrice && (
-                            <span className="text-sm line-through text-gray-400">${regularPrice}</span>
+                            <span className="text-sm line-through text-gray-400">৳{regularPrice}</span>
                           )}
                         </div>
                       </div>
@@ -339,7 +339,7 @@ export default function ProductDetails({ id }) {
                     +
                   </button>
                   <span className="text-sm text-gray-500 ml-2">
-                    Total: <span className="font-semibold text-green-600">${(quantity * currentPrice).toLocaleString()}</span>
+                    Total: <span className="font-semibold text-green-600">৳{(quantity * currentPrice).toLocaleString()}</span>
                   </span>
                 </div>
                 

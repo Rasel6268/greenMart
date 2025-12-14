@@ -17,9 +17,10 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/Hooks/useAuth";
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
-
-// Simple placeholder chart components
 const RevenueChart = () => {
+
+  
+  
   const { user, loading, adminLoading, isAdmin } = useAuth();
   return (
     <div className="h-80 flex items-center justify-center">
@@ -33,7 +34,7 @@ const RevenueChart = () => {
               (height, index) => (
                 <div
                   key={index}
-                  className="w-6 bg-gradient-to-t from-green-400 to-green-600 rounded-t transition-all hover:from-green-300 hover:to-green-500"
+                  className="w-6 bg-linear-to-t from-green-400 to-green-600 rounded-t transition-all hover:from-green-300 hover:to-green-500"
                   style={{ height: `${height}%` }}
                 />
               )
@@ -100,6 +101,9 @@ const CategoryChart = () => {
 };
 
 const Dashboard = () => {
+
+
+   
   // Demo data
   const statsData = [
     {

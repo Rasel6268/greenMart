@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import instance from "@/lib/instance";
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
+import apiClient from "@/lib/apiClient";
 
 const Transaction = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -16,7 +17,7 @@ const Transaction = () => {
   } = useQuery({
     queryKey: ["allTransactions"],
     queryFn: async () => {
-      const res = await instance.get(
+      const res = await apiClient.get(
         `/transactions?page=${currentPage}&limit=${limit}`
       );
       return res.data;

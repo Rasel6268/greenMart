@@ -32,7 +32,7 @@ const Home = () => {
       return res.data?.data ?? [];
     },
   });
-  console.log(categories);
+ 
 
   const isNew = products
     ?.filter((product) => product.isNewArrival === true)
@@ -53,7 +53,7 @@ const Home = () => {
     ?.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     ?.slice(0, 8);
 
-  console.log(isTopSeller);
+
 
   return (
     <section className="bg-gray-50">

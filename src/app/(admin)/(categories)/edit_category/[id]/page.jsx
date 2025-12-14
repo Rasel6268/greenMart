@@ -7,10 +7,11 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
+import apiClient from "@/lib/apiClient";
+import instance from "@/lib/instance";
 
 const Edit_category = ({ params }) => {
   const { id } = React.use(params);
-  const base_url = process.env.NEXT_PUBLIC_API_URL;
   const queryClient = useQueryClient();
 
   const {
@@ -25,7 +26,7 @@ const Edit_category = ({ params }) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["category", id],
     queryFn: async () => {
-      const res = await axios.get(`${base_url}/categories/${id}`);
+      const res = await instance.get(`/categories/${id}`);
       return res.data.data;
     },
     enabled: !!id,
@@ -34,7 +35,7 @@ const Edit_category = ({ params }) => {
   // Update mutation for editing category
   const updateMutation = useMutation({
     mutationFn: async (formData) => {
-      const res = await axios.put(`${base_url}/categories/${id}`, formData);
+      const res = await apiClient.put(`/categories/${id}`, formData);
       return res.data;
     },
     onSuccess: (data) => {

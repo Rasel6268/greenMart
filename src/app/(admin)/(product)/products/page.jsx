@@ -23,6 +23,8 @@ import axios from "axios";
 import ShoppingLoading from "@/components/Loading/Loading";
 import { toast } from "react-toastify";
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
+import instance from "@/lib/instance";
+import apiClient from "@/lib/apiClient";
 
 const ProductsTable = () => {
   const queryClient = useQueryClient();
@@ -33,18 +35,14 @@ const ProductsTable = () => {
   } = useQuery({
     queryKey: ["Products"],
     queryFn: async () => {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/products`
-      );
+      const res = await instance.get(`/products`);
       return res.data.products;
     },
   });
 
   const delateProduct = useMutation({
     mutationFn: async (id) => {
-      const res = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/products/${id}`
-      );
+      const res = await apiClient.delete(`/products/${id}`);
       return res.data;
     },
     onSuccess: () => {
