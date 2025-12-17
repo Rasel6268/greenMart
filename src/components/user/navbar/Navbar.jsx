@@ -21,11 +21,14 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openUserModel, setOpenUserModel] = useState(false);
   const userModelRef = useRef(null);
-  const { user, userLogout } = useAuth();
+  const { user, userLogout,isAdmin } = useAuth();
   const { cart } = useCart();
- 
- 
+
+  
+  
   const isAuth = !!user;
+
+  
 
   // Close user model when clicking outside
   useEffect(() => {
@@ -51,9 +54,12 @@ const Navbar = () => {
   const closeMobileMenu = () => {
     setIsMenuOpen(false);
   };
+
   const LogoutHandler = () => {
     userLogout();
     toast.info("Logout success");
+    setOpenUserModel(false);
+    setIsMenuOpen(false);
   };
 
   return (
@@ -75,7 +81,6 @@ const Navbar = () => {
                 alt="Logo"
                 className="w-15 h-15 object-contain"
               />
-
               <div className="flex flex-col">
                 <span className="text-2xl font-bold bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                   GreenStoreBD
@@ -156,36 +161,36 @@ const Navbar = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <h2 className="font-semibold text-gray-800 truncate">
-                              {user.name || "John Doe"}
+                              {user?.name || user?.displayName || "John Doe"}
                             </h2>
                             <p className="text-sm text-gray-600 truncate">
-                              {user.email || "john.doe@example.com"}
+                              {user?.email || "john.doe@example.com"}
                             </p>
                           </div>
                         </div>
                       </div>
 
                       {/* Menu Items */}
-
-                      
                       <div className="py-2">
-                        {
-                          isAuth ? ( <Link
-                          href="/dashboard"
-                          className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
-                          onClick={() => setOpenUserModel(false)}
-                        >
-                          <User className="w-5 h-5 text-gray-400" />
-                          <span>Dashboard</span>
-                        </Link>) : ( <Link
-                          href="/profile"
-                          className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
-                          onClick={() => setOpenUserModel(false)}
-                        >
-                          <User className="w-5 h-5 text-gray-400" />
-                          <span>Profile</span>
-                        </Link> )
-                        }
+                        {isAdmin ? (
+                          <Link
+                            href="/dashboard"
+                            className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
+                            onClick={() => setOpenUserModel(false)}
+                          >
+                            <User className="w-5 h-5 text-gray-400" />
+                            <span>Dashboard</span>
+                          </Link>
+                        ) : (
+                          <Link
+                            href="/profile"
+                            className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
+                            onClick={() => setOpenUserModel(false)}
+                          >
+                            <User className="w-5 h-5 text-gray-400" />
+                            <span>Profile</span>
+                          </Link>
+                        )}
                        
                         <div className="border-t border-gray-100 my-1"></div>
 
@@ -210,7 +215,7 @@ const Navbar = () => {
                     Login
                   </Link>
                   <Link
-                    href="user/register"
+                    href="/user/register"
                     className="px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-xl transition-colors flex items-center gap-3"
                   >
                     <UserRoundPlus className="w-4 h-4" />
@@ -286,17 +291,17 @@ const Navbar = () => {
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-green-500">
                       <img
-                        src={user.avatar || "/user-avatar.jpg"}
+                        src={user?.photoURL || "/user-avatar.jpg"}
                         alt="User Avatar"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-800">
-                        {user.name || "John Doe"}
+                        {user?.name || user?.displayName || "John Doe"}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {user.email || "john.doe@example.com"}
+                        {user?.email || "john.doe@example.com"}
                       </p>
                     </div>
                   </div>
@@ -308,7 +313,10 @@ const Navbar = () => {
                     <User className="w-4 h-4" />
                     Dashboard
                   </Link>
-                  <button className="w-full mt-2 px-4 py-3 text-left text-red-600 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-3">
+                  <button
+                    onClick={LogoutHandler}
+                    className="w-full mt-2 px-4 py-3 text-left text-red-600 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-3"
+                  >
                     <LogOut className="w-4 h-4" />
                     Logout
                   </button>
@@ -316,7 +324,7 @@ const Navbar = () => {
               ) : (
                 <div className="border-t border-gray-200 pt-4 mt-2 flex flex-col space-y-2">
                   <Link
-                    href="/login"
+                    href="/user/login"
                     className="px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-xl transition-colors flex items-center gap-3"
                     onClick={closeMobileMenu}
                   >
@@ -324,7 +332,7 @@ const Navbar = () => {
                     Login
                   </Link>
                   <Link
-                    href="/register"
+                    href="/user/register"
                     className="px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-xl transition-colors flex items-center gap-3"
                     onClick={closeMobileMenu}
                   >

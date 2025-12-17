@@ -112,7 +112,6 @@ export const AuthProvider = ({ children }) => {
     checkAdminStatus,
     isAdmin,
   };
-
   return (
     <AuthContext value={userData}>
       {children}

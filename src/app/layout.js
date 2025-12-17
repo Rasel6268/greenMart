@@ -33,6 +33,8 @@ export const metadata = {
     "bulk order",
     "cheap wholesale",
     "eCommerce Bangladesh",
+    'greenstore',
+    'greenstorebd'
   ],
   authors: [{ name: "GreenStoreBD Team", url: "https://greenstorebd.com" }],
   creator: "Web Dev with Rasel",
