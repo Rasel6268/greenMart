@@ -1,5 +1,5 @@
 import Shop from '@/components/Shop';
-import React from 'react';
+import React, { Suspense } from 'react';
 
 export const metadata = {
   title: 'Shop',
@@ -13,7 +13,11 @@ export const metadata = {
 };
 
 const ShopPage = () => {
-  return <Shop></Shop>
+  return (
+    <Suspense fallback={<div>Loading shop...</div>}>
+      <Shop />
+    </Suspense>
+  );
 };
 
 export default ShopPage;
