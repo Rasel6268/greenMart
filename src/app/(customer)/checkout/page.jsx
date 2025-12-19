@@ -11,6 +11,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/Hooks/useAuth";
 import usePrice from "@/Hooks/usePrice";
 import instance from "@/lib/instance";
+import apiClient from "@/lib/apiClient";
 
 export default function CheckoutPage() {
   const [shippingCost, setShippingCost] = useState(0);
@@ -155,19 +156,18 @@ export default function CheckoutPage() {
       : { price: product.retailPrice, label: "Retail" };
   };
 
-  
   const productinfo = products.map((p) => {
-  const tier = getWholesaleTier(p, p.quantity);
+    const tier = getWholesaleTier(p, p.quantity);
 
-  return {
-    productId: p._id,
-    name: p.name,
-    quantity: p.quantity,
-    price: tier.price,          
-    wholesaleTier: tier.label,  
-    images: p.images[0],
-  };
-});
+    return {
+      productId: p._id,
+      name: p.name,
+      quantity: p.quantity,
+      price: tier.price,
+      wholesaleTier: tier.label,
+      images: p.images[0],
+    };
+  });
   const createCODOrder = async (orderData) => {
     try {
       const codOrderData = {
@@ -179,11 +179,14 @@ export default function CheckoutPage() {
         discountAmount: discountAmount,
         estimated_delivery: deliveryTime,
       };
-      const res = await axios.post(`${baseUrl}/orders/cod`, codOrderData);
+      const res = await apiClient.post(`/orders/cod`, codOrderData);
+       const order = res.data.order;
       if (res.data.success) {
         toast.success(res.data.message);
         clearCart();
-        router.push("/order-success");
+        router.push(
+          `/CodOrder_success?orderId=${order.orderId}&status=${order.status}&total=${order.total}`
+        );
       }
     } catch (error) {
       console.error("Error creating COD order:", error);
@@ -223,10 +226,7 @@ export default function CheckoutPage() {
         estimated_delivery: deliveryTime,
       };
 
-      const response = await axios.post(
-        `${baseUrl}/payment/instance`,
-        paymentData
-      );
+      const response = await apiClient.post(`payment/instance`, paymentData);
       if (response.data.success && response.data.payment_url) {
         window.location.href = response.data.payment_url;
       } else {
@@ -991,68 +991,6 @@ export default function CheckoutPage() {
                         <span className="text-xs text-gray-500">BDT</span>
                       </div>
                     </div>
-
-                    {/* Enhanced Security Section */}
-                    <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <svg
-                            className="w-5 h-5 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                            />
-                          </svg>
-                        </div>
-                        <h3 className="font-semibold text-gray-900">
-                          Secure Checkout
-                        </h3>
-                      </div>
-                      <div className="space-y-2 text-sm text-gray-600">
-                        <p className="flex items-center gap-2">
-                          <svg
-                            className="w-4 h-4 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                          Your personal information is protected with SSL
-                          encryption
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <svg
-                            className="w-4 h-4 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                          {paymentMethod === "cashOnDelivery"
-                            ? "No payment required until you receive your order"
-                            : "Secure payment processing through SSL Commerce"}
-                        </p>
-                      </div>
-                    </div>
-
                     {/* Submit Button */}
                     <button
                       type="submit"

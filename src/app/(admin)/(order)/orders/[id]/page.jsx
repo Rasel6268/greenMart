@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Swal from "sweetalert2";
+import instance from "@/lib/instance";
+import apiClient from "@/lib/apiClient";
 
 const OrderDetailsPage = () => {
   const params = useParams();
@@ -36,8 +38,8 @@ const OrderDetailsPage = () => {
   } = useQuery({
     queryKey: ["order", orderId],
     queryFn: async () => {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`
+      const res = await apiClient.get(
+        `/orders/${orderId}`
       );
       return res.data.data;
     },
@@ -46,8 +48,8 @@ const OrderDetailsPage = () => {
   // Update order status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async (status) => {
-      const res = await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}/status`,
+      const res = await apiClient.patch(
+        `/orders/${orderId}/status`,
         { status }
       );
       return res.data;
@@ -127,8 +129,8 @@ const OrderDetailsPage = () => {
 
   const handleDownloadInvoice = async () => {
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}/invoice`,
+      const response = await apiClient.get(
+        `/orders/${orderId}/invoice`,
         {
           responseType: "blob",
         }
@@ -163,8 +165,8 @@ const OrderDetailsPage = () => {
 
   const handlePrintInvoice = async () => {
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}/invoice`,
+      const response = await apiClient.get(
+        `orders/${orderId}/invoice`,
         {
           responseType: "blob",
         }

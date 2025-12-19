@@ -3,8 +3,6 @@ import React, { useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation, Pagination, EffectFade } from "swiper/modules";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-
-// Import Swiper styles
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -43,19 +41,21 @@ const BannerSlider = () => {
 
   return (
     <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
-      {/* Custom Navigation Buttons */}
+      {/* Navigation Buttons */}
       <button
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300 backdrop-blur-sm cursor-pointer"
+        className="absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 text-white p-2 md:p-3 rounded-full transition-all duration-300 backdrop-blur-sm cursor-pointer"
         onClick={() => swiperRef.current?.slidePrev()}
       >
-        <FaChevronLeft size={20} />
+        <FaChevronLeft size={16} className="md:block hidden" />
+        <FaChevronLeft size={12} className="md:hidden" />
       </button>
 
       <button
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300 backdrop-blur-sm cursor-pointer"
+        className="absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 text-white p-2 md:p-3 rounded-full transition-all duration-300 backdrop-blur-sm cursor-pointer"
         onClick={() => swiperRef.current?.slideNext()}
       >
-        <FaChevronRight size={20} />
+        <FaChevronRight size={16} className="md:block hidden" />
+        <FaChevronRight size={12} className="md:hidden" />
       </button>
 
       <Swiper
@@ -66,18 +66,14 @@ const BannerSlider = () => {
         effect="fade"
         fadeEffect={{ crossFade: true }}
         speed={1000}
-        autoplay={{
-          delay: 5000,
-          disableOnInteraction: false,
-        }}
+        autoplay={{ delay: 5000, disableOnInteraction: false }}
         pagination={{
           clickable: true,
-          renderBullet: function (index, className) {
-            return `<span class="${className} bg-white/50 w-3 h-3 mx-1 rounded-full hover:bg-white transition-all duration-300"></span>`;
-          },
+          renderBullet: (index, className) =>
+            `<span class="${className} bg-white/50 w-3 h-3 mx-1 rounded-full hover:bg-white transition-all duration-300"></span>`,
         }}
         loop={true}
-        className="w-full h-[400px]"
+        className="w-full h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px]"
       >
         {bannerSlides.map((slide) => (
           <SwiperSlide key={slide.id}>
@@ -90,11 +86,15 @@ const BannerSlider = () => {
                 sizes="100vw"
                 quality={85}
               />
-              <div className="absolute inset-0 bg-linear-to-r from-black/50 to-transparent flex items-center">
-                <div className="text-white p-12 max-w-lg">
-                  <h1 className="text-5xl font-bold mb-4">{slide.title}</h1>
-                  <p className="text-xl mb-6 opacity-90">{slide.description}</p>
-                  <button className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+              <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center px-4 sm:px-8 lg:px-12">
+                <div className="text-white max-w-full sm:max-w-md lg:max-w-lg">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4">
+                    {slide.title}
+                  </h1>
+                  <p className="text-sm sm:text-base md:text-lg mb-3 sm:mb-6 opacity-90">
+                    {slide.description}
+                  </p>
+                  <button className="bg-green-500 hover:bg-green-600 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-full font-semibold text-sm sm:text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
                     {slide.buttonText}
                   </button>
                 </div>
@@ -104,7 +104,6 @@ const BannerSlider = () => {
         ))}
       </Swiper>
 
-      {/* Custom Pagination Styles */}
       <style jsx>{`
         .swiper-pagination-bullet-active {
           background: white !important;

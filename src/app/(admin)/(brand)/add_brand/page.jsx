@@ -6,6 +6,8 @@ import Link from "next/link";
 import axios from "axios";
 import { toast } from "react-toastify";
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
+import instance from "@/lib/instance";
+import apiClient from "@/lib/apiClient";
 
 const AddBrand = () => {
   const [loading, setLoading] = useState(false);
@@ -38,8 +40,8 @@ const AddBrand = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/brands`,
+      const res = await apiClient.post(
+        'brands',
         data
       );
 

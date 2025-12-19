@@ -10,9 +10,6 @@ import {
   FaShoppingBag, 
   FaCreditCard, 
   FaMapMarkerAlt,
-  FaCog,
-  FaSignOutAlt,
-  FaBell,
   FaChevronRight
 } from "react-icons/fa";
 

@@ -13,6 +13,8 @@ export default function CartPage() {
   const [totalPrice, setTotalPrice] = useState(0);
   const { getCart, saveCart, cart, setCart } = useCart();
   const [discountAmount, setDiscountAm] = useState(0);
+  const [stockErrors, setStockErrors] = useState({}); // Track stock errors per product
+  const [outOfStockProducts, setOutOfStockProducts] = useState([]); // Track out of stock products
 
   const finalPrice = totalPrice - discountAmount;
 
@@ -30,6 +32,23 @@ export default function CartPage() {
     return tier
       ? { price: tier.price, label: tier.label }
       : { price: product.retailPrice, label: "Retail" };
+  };
+
+  // Validate stock for a specific product
+  const validateProductStock = (product, quantity) => {
+    if (!product.stock || product.stock === 0) {
+      return { isValid: false, message: "Out of stock" };
+    }
+    
+    if (quantity > product.stock) {
+      return { 
+        isValid: false, 
+        message: `Only ${product.stock} units available`,
+        maxAllowed: product.stock 
+      };
+    }
+    
+    return { isValid: true, message: "" };
   };
 
   // Fetch product details for cart items
@@ -53,10 +72,44 @@ export default function CartPage() {
 
       const productsWithQuantity = selectedProducts.map((p) => {
         const cartItem = cartItems.find((c) => c.id === p._id);
-        return { ...p, quantity: cartItem.quantity };
+        const quantity = cartItem.quantity;
+        const stockValidation = validateProductStock(p, quantity);
+        
+        // Set initial stock errors
+        if (!stockValidation.isValid) {
+          setStockErrors(prev => ({
+            ...prev,
+            [p._id]: stockValidation.message
+          }));
+        }
+
+        return { 
+          ...p, 
+          quantity,
+          stockStatus: stockValidation
+        };
       });
 
-      setProducts(productsWithQuantity);
+      // Filter out of stock products
+      const inStockProducts = productsWithQuantity.filter(p => p.stockStatus.isValid);
+      const outOfStock = productsWithQuantity.filter(p => !p.stockStatus.isValid);
+      
+      setProducts(inStockProducts);
+      setOutOfStockProducts(outOfStock);
+      
+      // Show toast for out of stock items
+      if (outOfStock.length > 0) {
+        toast.error(`${outOfStock.length} item(s) removed from cart due to stock issues`);
+      }
+      
+      // Update cart to remove out of stock items
+      if (outOfStock.length > 0) {
+        const updatedCart = cartItems.filter(item => 
+          !outOfStock.some(p => p._id === item.id)
+        );
+        saveCart(updatedCart);
+      }
+
       setLoading(false);
     } catch (err) {
       console.error("Error fetching cart products:", err);
@@ -68,8 +121,9 @@ export default function CartPage() {
   const calculateTotal = () => {
     const { total, discountAmount } = products.reduce(
       (acc, product) => {
+        if (!product.stockStatus?.isValid) return acc;
+        
         const { price } = getWholesaleTier(product, product.quantity);
-
         const itemDiscount = (price * (product.discountPercent || 0)) / 100;
         const itemTotal = price  * product.quantity;
 
@@ -85,16 +139,53 @@ export default function CartPage() {
     setDiscountAm(discountAmount);
   };
 
-  const updateQuantity = (id, quantity) => {
-    if (quantity < 1) return;
+  const updateQuantity = (id, newQuantity) => {
+    if (newQuantity < 1) return;
 
+    const product = products.find(p => p._id === id);
+    if (!product) return;
+
+    // Validate stock before updating
+    const stockValidation = validateProductStock(product, newQuantity);
+    
+    if (!stockValidation.isValid) {
+      // Set error message
+      setStockErrors(prev => ({
+        ...prev,
+        [id]: stockValidation.message
+      }));
+      
+      // If stock available but quantity exceeds, adjust to max stock
+      if (stockValidation.maxAllowed && newQuantity > stockValidation.maxAllowed) {
+        toast.error(`Cannot exceed available stock of ${stockValidation.maxAllowed} units`);
+        newQuantity = stockValidation.maxAllowed;
+      } else if (product.stock === 0) {
+        toast.error("Product is out of stock");
+        removeFromCart(id);
+        return;
+      }
+    } else {
+      // Clear error if valid
+      setStockErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[id];
+        return newErrors;
+      });
+    }
+
+    // Update cart
     const updatedCart = cart.map((item) =>
-      item.id === id ? { ...item, quantity } : item
+      item.id === id ? { ...item, quantity: newQuantity } : item
     );
     saveCart(updatedCart);
 
+    // Update products state
     const updatedProducts = products.map((p) =>
-      p._id === id ? { ...p, quantity } : p
+      p._id === id ? { 
+        ...p, 
+        quantity: newQuantity,
+        stockStatus: validateProductStock(p, newQuantity)
+      } : p
     );
     setProducts(updatedProducts);
   };
@@ -105,13 +196,30 @@ export default function CartPage() {
 
     const updatedProducts = products.filter((p) => p._id !== id);
     setProducts(updatedProducts);
-    toast.success("Cart remove successfully");
+    
+    // Clear stock error for removed product
+    setStockErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[id];
+      return newErrors;
+    });
+    
+    toast.success("Item removed from cart");
   };
 
   const clearCart = () => {
     saveCart([]);
     setProducts([]);
+    setStockErrors({});
+    setOutOfStockProducts([]);
+    toast.success("Cart cleared successfully");
   };
+
+  // Check if any product has stock issues
+  const hasStockIssues = Object.keys(stockErrors).length > 0 || outOfStockProducts.length > 0;
+  
+  // Check if checkout should be disabled
+  const isCheckoutDisabled = hasStockIssues || products.length === 0;
 
   useEffect(() => {
     fetchCartProducts();
@@ -129,7 +237,11 @@ export default function CartPage() {
     );
   }
 
-  if (products.length === 0) {
+  // Combine both out of stock and in-stock with errors for display
+  const allCartItems = [...outOfStockProducts, ...products];
+  const hasItems = allCartItems.length > 0;
+
+  if (!hasItems) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="container mx-auto px-4 max-w-7xl">
@@ -187,6 +299,26 @@ export default function CartPage() {
               : "items"}{" "}
             in your cart
           </p>
+          
+          {/* Stock Issues Warning */}
+          {hasStockIssues && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <svg className="w-6 h-6 text-red-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-red-700">Stock Issues Detected</h4>
+                  <p className="text-red-600 text-sm mt-1">
+                    {outOfStockProducts.length > 0 && 
+                      `${outOfStockProducts.length} item(s) are out of stock and have been removed. `}
+                    {Object.keys(stockErrors).length > 0 && 
+                      `${Object.keys(stockErrors).length} item(s) exceed available stock. Please adjust quantities to proceed to checkout.`}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -223,16 +355,76 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* Cart Items */}
+            {/* Out of Stock Items */}
+            {outOfStockProducts.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-red-700">Out of Stock Items</h3>
+                {outOfStockProducts.map((item) => (
+                  <div
+                    key={item._id}
+                    className="bg-red-50 rounded-xl shadow-sm border border-red-200 overflow-hidden"
+                  >
+                    <div className="p-6">
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          <Image
+                            src={item.images?.[0] || "/images/placeholder.jpg"}
+                            alt={item.name}
+                            width={80}
+                            height={80}
+                            className="rounded-lg object-cover opacity-50"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 line-through">
+                            {item.name}
+                          </h3>
+                          <p className="text-red-600 text-sm mt-1">
+                            ⚠️ This item is out of stock and has been removed from your cart.
+                          </p>
+                          <p className="text-gray-500 text-sm mt-2">
+                            You had {item.quantity} item(s) in your cart.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => removeFromCart(item._id)}
+                          className="text-gray-400 hover:text-red-500 transition-colors p-2"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* In Stock Cart Items */}
             <div className="space-y-4">
               {products.map((item) => {
                 const { price, label } = getWholesaleTier(item, item.quantity);
                 const subtotal = price * item.quantity;
+                const stockError = stockErrors[item._id];
+                const isStockValid = item.stockStatus?.isValid && !stockError;
 
                 return (
                   <div
                     key={item._id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+                    className={`bg-white rounded-xl shadow-sm border overflow-hidden ${
+                      !isStockValid ? 'border-red-300' : 'border-gray-100'
+                    }`}
                   >
                     <div className="p-6">
                       <div className="flex flex-col sm:flex-row gap-6">
@@ -242,11 +434,17 @@ export default function CartPage() {
                             alt={item.name}
                             width={120}
                             height={120}
-                            className="rounded-lg object-cover"
+                            className={`rounded-lg object-cover ${
+                              !isStockValid ? 'opacity-70' : ''
+                            }`}
                           />
                           {/* Price Tier Badge */}
-                          <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                            {label}
+                          <div className={`absolute -top-2 -right-2 text-xs px-2 py-1 rounded ${
+                            !isStockValid 
+                              ? 'bg-red-500 text-white' 
+                              : 'bg-blue-500 text-white'
+                          }`}>
+                            {!isStockValid ? 'Stock Issue' : label}
                           </div>
                         </div>
 
@@ -254,7 +452,9 @@ export default function CartPage() {
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                             <div className="flex-1">
                               <div className="flex items-start justify-between">
-                                <h3 className="text-lg font-semibold text-gray-900">
+                                <h3 className={`text-lg font-semibold ${
+                                  !isStockValid ? 'text-red-700' : 'text-gray-900'
+                                }`}>
                                   {item.name}
                                 </h3>
                                 <button
@@ -283,21 +483,40 @@ export default function CartPage() {
                                   </span>
                                 )}
                               </p>
-                              <p
-                                className="text-gray-600 text-sm mt-1 line-clamp-2"
-                                title={item.description}
-                              >
-                                {item.description?.slice(0, 70)}...
-                              </p>
+                              
+                              {/* Stock Information */}
+                              <div className="mt-2">
+                                <p className={`text-sm font-medium ${
+                                  !isStockValid ? 'text-red-600' : 'text-green-600'
+                                }`}>
+                                  <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
+                                    !isStockValid ? 'bg-red-500' : 'bg-green-500'
+                                  }`}></span>
+                                  {item.stock} units available
+                                </p>
+                                
+                                {/* Stock Error Message */}
+                                {stockError && (
+                                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                                    <p className="text-red-700 text-sm font-medium">
+                                      ⚠️ {stockError}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
                             </div>
 
                             <div className="text-right">
-                              <p className="text-xl font-bold text-green-600">
+                              <p className={`text-xl font-bold ${
+                                !isStockValid ? 'text-red-600' : 'text-green-600'
+                              }`}>
                                 ৳{price}
                               </p>
                               <p className="text-gray-500 text-sm">per item</p>
-                              <p className="text-xs text-blue-600 mt-1">
-                                {label} Price
+                              <p className={`text-xs mt-1 ${
+                                !isStockValid ? 'text-red-600' : 'text-blue-600'
+                              }`}>
+                                {!isStockValid ? 'Adjust Quantity' : `${label} Price`}
                               </p>
                             </div>
                           </div>
@@ -305,16 +524,24 @@ export default function CartPage() {
                           {/* Quantity Controls */}
                           <div className="flex items-center justify-between mt-6">
                             <div className="flex items-center gap-4">
-                              <span className="text-sm text-gray-600 font-medium">
+                              <span className={`text-sm font-medium ${
+                                !isStockValid ? 'text-red-600' : 'text-gray-600'
+                              }`}>
                                 Quantity:
                               </span>
-                              <div className="flex items-center gap-3 bg-gray-50 rounded-lg px-3 py-2">
+                              <div className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
+                                !isStockValid ? 'bg-red-50 border border-red-200' : 'bg-gray-50'
+                              }`}>
                                 <button
                                   onClick={() =>
                                     updateQuantity(item._id, item.quantity - 1)
                                   }
                                   disabled={item.quantity <= 1}
-                                  className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                                  className={`w-8 h-8 flex items-center justify-center rounded-full border disabled:opacity-30 disabled:cursor-not-allowed transition-colors ${
+                                    !isStockValid
+                                      ? 'bg-white border-red-300 hover:bg-red-100'
+                                      : 'bg-white border-gray-300 hover:bg-gray-100'
+                                  }`}
                                 >
                                   <svg
                                     className="w-4 h-4"
@@ -330,14 +557,21 @@ export default function CartPage() {
                                     />
                                   </svg>
                                 </button>
-                                <span className="w-8 text-center font-medium text-gray-900">
+                                <span className={`w-8 text-center font-medium ${
+                                  !isStockValid ? 'text-red-700' : 'text-gray-900'
+                                }`}>
                                   {item.quantity}
                                 </span>
                                 <button
                                   onClick={() =>
                                     updateQuantity(item._id, item.quantity + 1)
                                   }
-                                  className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-300 hover:bg-gray-100 transition-colors"
+                                  disabled={item.quantity >= item.stock}
+                                  className={`w-8 h-8 flex items-center justify-center rounded-full border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                                    !isStockValid
+                                      ? 'bg-white border-red-300 hover:bg-red-100'
+                                      : 'bg-white border-gray-300 hover:bg-gray-100'
+                                  }`}
                                 >
                                   <svg
                                     className="w-4 h-4"
@@ -354,9 +588,14 @@ export default function CartPage() {
                                   </svg>
                                 </button>
                               </div>
+                              <p className="text-xs text-gray-500">
+                                Max: {item.stock}
+                              </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-lg font-semibold text-gray-900">
+                              <p className={`text-lg font-semibold ${
+                                !isStockValid ? 'text-red-700' : 'text-gray-900'
+                              }`}>
                                 ৳{subtotal.toFixed(2)}
                               </p>
                               <p className="text-gray-500 text-sm">total</p>
@@ -377,9 +616,13 @@ export default function CartPage() {
               <div className="p-6">
                 {/* Header with icon */}
                 <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                  <div className="p-2 bg-green-50 rounded-lg">
+                  <div className={`p-2 rounded-lg ${
+                    isCheckoutDisabled ? 'bg-red-50' : 'bg-green-50'
+                  }`}>
                     <svg
-                      className="w-6 h-6 text-green-600"
+                      className={`w-6 h-6 ${
+                        isCheckoutDisabled ? 'text-red-600' : 'text-green-600'
+                      }`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -397,7 +640,30 @@ export default function CartPage() {
                   </h2>
                 </div>
 
-                {/* Product Items with better styling */}
+                {/* Checkout Disabled Warning */}
+                {isCheckoutDisabled && (
+                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <div>
+                        <p className="text-red-700 font-medium">
+                          {products.length === 0 
+                            ? "Your cart is empty" 
+                            : "Cannot proceed to checkout"}
+                        </p>
+                        <p className="text-red-600 text-sm mt-1">
+                          {hasStockIssues 
+                            ? "Please resolve stock issues before checking out" 
+                            : "Add items to your cart to continue"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Product Items */}
                 <div className="space-y-4 mb-6 max-h-64 overflow-y-auto pr-2">
                   {products.map((item, index) => {
                     const { price, label } = getWholesaleTier(
@@ -405,26 +671,44 @@ export default function CartPage() {
                       item.quantity
                     );
                     const subtotal = price * item.quantity;
+                    const hasError = stockErrors[item._id];
+                    
                     return (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+                          hasError ? 'bg-red-50 hover:bg-red-100' : 'bg-gray-50 hover:bg-gray-100'
+                        }`}
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">
+                          <p className={`font-medium truncate ${
+                            hasError ? 'text-red-700' : 'text-gray-900'
+                          }`}>
                             {item.name}
                           </p>
                           <p className="text-sm text-gray-500 mt-1">
-                            {item.quantity} × ${price.toFixed(2)}
+                            {item.quantity} × ৳{price.toFixed(2)}
                           </p>
+                          {hasError && (
+                            <p className="text-xs text-red-600 mt-1">
+                              ⚠️ {stockErrors[item._id]}
+                            </p>
+                          )}
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-gray-900">
-                          ৳{subtotal.toFixed(2)}
+                          <p className={`font-semibold ${
+                            hasError ? 'text-red-700' : 'text-gray-900'
+                          }`}>
+                            ৳{subtotal.toFixed(2)}
                           </p>
-                          {label && (
+                          {label && !hasError && (
                             <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full mt-1">
                               {label}
+                            </span>
+                          )}
+                          {hasError && (
+                            <span className="inline-block px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full mt-1">
+                              Stock Issue
                             </span>
                           )}
                         </div>
@@ -433,7 +717,7 @@ export default function CartPage() {
                   })}
                 </div>
 
-                {/* Price Breakdown with animations */}
+                {/* Price Breakdown */}
                 <div className="space-y-4 py-4 border-t border-gray-100">
                   {/* Subtotal */}
                   <div className="flex justify-between items-center">
@@ -447,7 +731,7 @@ export default function CartPage() {
                     </span>
                   </div>
 
-                  {/* Discount Section - Highlighted */}
+                  {/* Discount Section */}
                   <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center space-x-2">
@@ -470,7 +754,6 @@ export default function CartPage() {
                         -৳{discountAmount.toFixed(2)}
                       </span>
                     </div>
-                    
                   </div>
 
                   {/* Shipping */}
@@ -489,13 +772,12 @@ export default function CartPage() {
                     </span>
                   </div>
 
-                  {/* Progress bar for free shipping */}
+                  {/* Free shipping progress */}
                   {totalPrice < 200 && (
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
                       <div className="flex justify-between text-sm text-blue-800 mb-2">
                         <span>
-                          Add ৳{(200 - totalPrice).toFixed(2)} for free
-                          shipping!
+                          Add ৳{(200 - totalPrice).toFixed(2)} for free shipping!
                         </span>
                         <span>
                           {Math.min((totalPrice / 200) * 100, 100).toFixed(0)}%
@@ -518,8 +800,12 @@ export default function CartPage() {
 
                 <hr className="my-4 border-gray-200" />
 
-                {/* Total with emphasis */}
-                <div className="flex justify-between items-center py-4 bg-linear-to-r from-green-50 to-emerald-50 -mx-6 px-6 rounded-lg">
+                {/* Total */}
+                <div className={`flex justify-between items-center py-4 -mx-6 px-6 rounded-lg ${
+                  isCheckoutDisabled 
+                    ? 'bg-red-50' 
+                    : 'bg-linear-to-r from-green-50 to-emerald-50'
+                }`}>
                   <div>
                     <span className="text-lg font-semibold text-gray-900 block">
                       Total
@@ -529,34 +815,45 @@ export default function CartPage() {
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-2xl font-bold text-green-600 block">
+                    <span className={`text-2xl font-bold block ${
+                      isCheckoutDisabled ? 'text-red-600' : 'text-green-600'
+                    }`}>
                       ৳{finalPrice.toFixed(2)}
                     </span>
-                    <span className="text-xs text-gray-500">USD</span>
+                    <span className="text-xs text-gray-500">BDT</span>
                   </div>
                 </div>
-                {/* Enhanced Checkout Button */}
-                <Link
-                  href="/checkout"
-                  className="group relative block w-full text-center py-4 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold transition-all duration-300 shadow-lg shadow-green-200 hover:shadow-2xl hover:shadow-green-300 transform hover:-translate-y-1"
-                >
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    Proceed to Checkout
-                    <svg
-                      className="w-5 h-5 group-hover:translate-x-1 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 7l5 5m0 0l-5 5m5-5H6"
-                      />
-                    </svg>
-                  </span>
-                </Link>
+                
+                {/* Checkout Button */}
+                {isCheckoutDisabled ? (
+                  <div className="relative block w-full text-center py-4 bg-gray-300 text-gray-500 rounded-xl font-bold cursor-not-allowed">
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      {hasStockIssues ? 'Resolve Stock Issues' : 'Cart is Empty'}
+                    </span>
+                  </div>
+                ) : (
+                  <Link
+                    href="/checkout"
+                    className="group relative block w-full text-center py-4 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold transition-all duration-300 shadow-lg shadow-green-200 hover:shadow-2xl hover:shadow-green-300 transform hover:-translate-y-1"
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      Proceed to Checkout
+                      <svg
+                        className="w-5 h-5 group-hover:translate-x-1 transition-transform"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
+                    </span>
+                  </Link>
+                )}
               </div>
             </div>
           </div>

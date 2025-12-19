@@ -411,14 +411,7 @@ const ProductsTable = () => {
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-2">
                         <Link
-                          href={`/admin/dashboard/products/${product._id}`}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="View Details"
-                        >
-                          <Eye size={18} />
-                        </Link>
-                        <Link
-                          href={`/admin/dashboard/products/edit/${product._id}`}
+                          href={`/edit_product/${product._id}`}
                           className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                           title="Edit Product"
                         >

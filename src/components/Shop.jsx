@@ -2,14 +2,18 @@
 import { useCart } from "@/Hooks/useCart";
 import instance from "@/lib/instance";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { toast } from "react-toastify";
+import { useSearchParams } from "next/navigation";
 
 const Shop = () => {
   const { addToCart, handleAddToCart } = useCart();
+  const searchParams = useSearchParams();
+
+  // Get category from URL
+  const urlCategory = searchParams?.get("category");
 
   const {
     data: categories,
@@ -38,9 +42,7 @@ const Shop = () => {
     queryKey: ["brands"],
     queryFn: async () => {
       try {
-        const res = await instance.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/products/brandWithProductCount`
-        );
+        const res = await instance.get(`/products/brandWithProductCount`);
         return res.data?.data ?? [];
       } catch (error) {
         console.error("Error fetching brands:", error);
@@ -57,9 +59,7 @@ const Shop = () => {
     queryKey: ["products"],
     queryFn: async () => {
       try {
-        const res = await instance.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/products`
-        );
+        const res = await instance.get(`/products`);
         return res.data?.products ?? [];
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -70,10 +70,10 @@ const Shop = () => {
 
   const filtersData = {
     priceRanges: [
-      { id: 1, range: "$0 - $25", min: 0, max: 25, count: 15 },
-      { id: 2, range: "$25 - $50", min: 25, max: 50, count: 23 },
-      { id: 3, range: "$50 - $100", min: 50, max: 100, count: 31 },
-      { id: 4, range: "$100+", min: 100, max: 1000, count: 12 },
+      { id: 1, range: "৳0 - ৳100", min: 0, max: 100, count: 15 },
+      { id: 2, range: "৳100 - ৳500", min: 100, max: 500, count: 23 },
+      { id: 3, range: "৳500 - ৳1,000", min: 500, max: 1000, count: 31 },
+      { id: 4, range: "৳1,000+", min: 1000, max: 10000, count: 12 },
     ],
     brands: brand || [],
     ratings: [
@@ -92,6 +92,31 @@ const Shop = () => {
   const [selectedRatings, setSelectedRatings] = useState([]);
   const [priceSort, setPriceSort] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Effect to set category from URL when page loads
+  useEffect(() => {
+    if (urlCategory && categories) {
+      // Check if the category from URL exists in your categories
+      const categoryExists = categories.some(
+        (cat) => cat.category === urlCategory
+      );
+
+      if (categoryExists && !selectedCategories.includes(urlCategory)) {
+        setSelectedCategories([urlCategory]);
+
+        // Optional: Scroll to filters section on mobile
+        if (window.innerWidth < 1024) {
+          setIsFilterOpen(true);
+          setTimeout(() => {
+            const filtersSection = document.querySelector(".lg\\:col-span-1");
+            if (filtersSection) {
+              filtersSection.scrollIntoView({ behavior: "smooth" });
+            }
+          }, 100);
+        }
+      }
+    }
+  }, [urlCategory, categories]);
 
   // Filter products with proper error handling
   const filteredProducts = useMemo(() => {
@@ -133,7 +158,11 @@ const Shop = () => {
       filtered = filtered.filter((product) => {
         return selectedPriceRanges.some((rangeId) => {
           const range = filtersData.priceRanges.find((r) => r.id === rangeId);
-          return product?.price >= range.min && product?.price <= range.max;
+          console.log(range);
+          return (
+            product?.regularPrice >= range.min &&
+            product?.regularPrice <= range.max
+          );
         });
       });
     }
@@ -171,11 +200,21 @@ const Shop = () => {
 
   // Handler functions
   const handleCategoryToggle = (categoryName) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryName)
+    setSelectedCategories((prev) => {
+      const newCategories = prev.includes(categoryName)
         ? prev.filter((c) => c !== categoryName)
-        : [...prev, categoryName]
-    );
+        : [...prev, categoryName];
+
+      // Update URL if we're clearing the URL category
+      if (
+        urlCategory === categoryName &&
+        !newCategories.includes(categoryName)
+      ) {
+        window.history.replaceState({}, "", "/shop");
+      }
+
+      return newCategories;
+    });
   };
 
   const handleBrandToggle = (brandName) => {
@@ -201,15 +240,6 @@ const Shop = () => {
         : [...prev, rating]
     );
   };
-  // const handleAddToCart = (productId, quentity, productName) => {
-  //   const result = addToCart(productId, quentity);
-  //   console.log(result);
-  //   if (result.success == false) {
-  //     toast.info(result.message);
-  //   } else if (result.success == true) {
-  //     toast.success(`${productName} added to cart!`);
-  //   }
-  // };
 
   const clearAllFilters = () => {
     setSelectedCategories([]);
@@ -218,6 +248,9 @@ const Shop = () => {
     setSelectedRatings([]);
     setPriceSort("");
     setSearchTerm("");
+
+    // Clear URL params
+    window.history.replaceState({}, "", "/shop");
   };
 
   const getActiveFiltersCount = () => {
@@ -252,6 +285,33 @@ const Shop = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      {/* URL Category Banner */}
+      {urlCategory && selectedCategories.includes(urlCategory) && (
+        <div className="w-11/12 mx-auto px-4 pt-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-blue-600 font-medium">
+                Filtering by category:
+              </span>
+              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                {urlCategory}
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedCategories((prev) =>
+                  prev.filter((c) => c !== urlCategory)
+                );
+                window.history.replaceState({}, "", "/shop");
+              }}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Search Bar */}
       <div className="bg-white shadow-sm border-b">
         <div className="w-11/12 mx-auto px-4 py-4">
@@ -545,162 +605,153 @@ const Shop = () => {
 
             {/* Products Grid */}
             {filteredProducts?.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                 {filteredProducts?.map((product) => (
                   <div
                     key={product._id}
-                    className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 overflow-hidden"
+                    className="group bg-white rounded-xl md:rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 overflow-hidden"
                   >
-                    <Link href={`/product_details/${product._id}`}>
-                      {/* Product Image Container */}
-                      <div className="relative overflow-hidden bg-gray-50">
+                    {/* Product Image Container */}
+                    <div className="relative overflow-hidden bg-gray-50">
+                      <Link href={`/product_details/${product._id}`}>
                         <Image
-                          src={
-                            product.images?.[0]
-                          }
+                          src={product.images?.[0]}
                           alt={product.name}
-                          width={500} 
+                          width={500}
                           height={224}
-                          className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="w-full h-44 sm:h-56 object-cover transition-transform duration-500 group-hover:scale-105"
                         />
+                      </Link>
 
-                        {/* Badges */}
-                        <div className="absolute top-3 left-3 flex flex-col gap-2">
-                          {product.isNewArrival && (
-                            <span className="bg-blue-500 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-lg">
-                              New
-                            </span>
-                          )}
-                          {product.isDiscountActive && (
-                            <span className="bg-red-500 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-lg">
-                              -{product.discountPercent}%
-                            </span>
-                          )}
-                          {product.isFeatured && (
-                            <span className="bg-purple-500 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-lg">
-                              Featured
-                            </span>
-                          )}
-                          {product.bestseller && (
-                            <span className="bg-orange-500 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-lg">
-                              Bestseller
-                            </span>
-                          )}
-                        </div>
+                      {/* Badges */}
+                      <div className="absolute top-2 left-2 flex flex-col gap-1">
+                        {product.isNewArrival && (
+                          <span className="bg-blue-500 text-white text-[10px] px-2 py-1 rounded-full font-medium">
+                            New
+                          </span>
+                        )}
+                        {product.isDiscountActive && (
+                          <span className="bg-red-500 text-white text-[10px] px-2 py-1 rounded-full font-medium">
+                            -{product.discountPercent}%
+                          </span>
+                        )}
+                        {product.isFeatured && (
+                          <span className="bg-purple-500 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-lg">
+                            Featured
+                          </span>
+                        )}
+                        {product.bestseller && (
+                          <span className="bg-orange-500 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-lg">
+                            Bestseller
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="p-3 sm:p-5 flex flex-col h-full">
+                      {/* Brand and Category */}
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[10px] sm:text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                          {product.brand || "Generic"}
+                        </span>
+                        <span className="text-[10px] sm:text-xs text-gray-500 capitalize">
+                          {product.category || "Uncategorized"}
+                        </span>
                       </div>
 
-                      {/* Product Info */}
-                      <div className="p-5">
-                        {/* Brand and Category */}
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
-                            {product.brand || "Generic"}
-                          </span>
-                          <span className="text-xs text-gray-500 capitalize">
-                            {product.category || "Uncategorized"}
-                          </span>
-                        </div>
+                      {/* Product Name */}
+                      <h3 className="font-semibold text-gray-900 text-sm sm:text-lg line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
+                        {product.name || "Unnamed Product"}
+                      </h3>
 
-                        {/* Product Name */}
-                        <h3 className="font-semibold text-gray-900 line-clamp-2 mb-3 group-hover:text-blue-600 transition-colors duration-200 text-lg leading-tight">
-                          {product.name || "Unnamed Product"}
-                        </h3>
-
-                        {/* Rating */}
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center">
-                            <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-full">
-                              {[...Array(5)].map((_, i) => (
-                                <span
-                                  key={i}
-                                  className={`text-sm ${
-                                    i < Math.floor(product.rating || 0)
-                                      ? "text-yellow-400"
-                                      : "text-gray-300"
-                                  } ${
-                                    i < (product.rating || 0)
-                                      ? "drop-shadow-sm"
-                                      : ""
-                                  }`}
-                                >
-                                  ★
-                                </span>
-                              ))}
-                              <span className="text-sm font-medium text-gray-700 ml-1.5">
-                                {product.rating || 0}
-                              </span>
-                            </div>
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            ({product.reviewCount || 0} reviews)
-                          </span>
-                        </div>
-
-                        {/* Price */}
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-gray-900">
-                              ৳{product.retailPrice || 0}
+                      {/* Rating */}
+                      <div className="hidden sm:flex items-center justify-between mb-3">
+                        <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-full">
+                          {[...Array(5)].map((_, i) => (
+                            <span
+                              key={i}
+                              className={`text-sm ${
+                                i < Math.floor(product.rating || 0)
+                                  ? "text-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            >
+                              ★
                             </span>
-                            {product.regularPrice &&
-                              product.regularPrice > product.retailPrice && (
-                                <span className="text-sm text-gray-500 line-through">
-                                  ৳{product.regularPrice}
-                                </span>
-                              )}
-                          </div>
-
-                          {/* Stock Status */}
-                          <span
-                            className={`text-xs font-medium px-2 py-1 rounded-full ${
-                              (product.stock || 0) > 10
-                                ? "text-green-600 bg-green-50"
-                                : (product.stock || 0) > 0
-                                ? "text-orange-600 bg-orange-50"
-                                : "text-red-600 bg-red-50"
-                            }`}
-                          >
-                            {(product.stock || 0) > 10
-                              ? "In Stock"
-                              : (product.stock || 0) > 0
-                              ? "Low Stock"
-                              : "Out of Stock"}
+                          ))}
+                          <span className="text-sm font-medium text-gray-700 ml-1">
+                            {product.rating || 0}
                           </span>
                         </div>
+                        <span className="text-xs text-gray-500">
+                          ({product.reviewCount || 0})
+                        </span>
+                      </div>
 
-                        {/* Add to Cart Button */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleAddToCart(product._id, 1, product.name);
-                          }}
-                          disabled={(product.stock || 0) === 0}
-                          className={`w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
-                            (product.stock || 0) === 0
-                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-linear-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 hover:shadow-lg transform hover:-translate-y-0.5"
+                      {/* Price */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <span className="text-lg sm:text-2xl font-bold text-gray-900">
+                            ৳{product.retailPrice || 0}
+                          </span>
+                          {product.regularPrice &&
+                            product.regularPrice > product.retailPrice && (
+                              <span className="block text-xs text-gray-500 line-through">
+                                ৳{product.regularPrice}
+                              </span>
+                            )}
+                        </div>
+
+                        <span
+                          className={`text-[10px] sm:text-xs font-medium px-2 py-1 rounded-full ${
+                            (product.stock || 0) > 10
+                              ? "text-green-600 bg-green-50"
+                              : (product.stock || 0) > 0
+                              ? "text-orange-600 bg-orange-50"
+                              : "text-red-600 bg-red-50"
                           }`}
                         >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                            />
-                          </svg>
-                          {(product.stock || 0) === 0
-                            ? "Out of Stock"
-                            : "Add to Cart"}
-                        </button>
+                          {(product.stock || 0) > 10
+                            ? "In Stock"
+                            : (product.stock || 0) > 0
+                            ? "Low Stock"
+                            : "Out"}
+                        </span>
                       </div>
-                    </Link>
+
+                      {/* Add to Cart Button */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAddToCart(product._id, 1, product.name);
+                        }}
+                        disabled={(product.stock || 0) === 0}
+                        className={` w-full py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                          (product.stock || 0) === 0
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-linear-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700"
+                        }`}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                        {(product.stock || 0) === 0
+                          ? "Out of Stock"
+                          : "Add to Cart"}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -742,7 +793,7 @@ const Shop = () => {
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <button
                       onClick={clearAllFilters}
-                      className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 transition-colors font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-transform"
+                      className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 transition-colors font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
                       Clear All Filters
                     </button>

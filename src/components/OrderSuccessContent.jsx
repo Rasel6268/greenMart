@@ -1,7 +1,7 @@
 "use client";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "@/Hooks/useCart";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 const OrderSuccessContent = () => {
   const searchParams = useSearchParams();
@@ -12,14 +12,16 @@ const OrderSuccessContent = () => {
   const status = searchParams.get("status");
   const clear_cart = searchParams.get("clear_cart");
   const card_category = searchParams.get("card_category");
+   const hasClearedRef = useRef(false);
 
   const { clearCart } = useCart();
 
   useEffect(() => {
-    if (clear_cart === "true") {
+    if (clear_cart === "true" && !hasClearedRef.current) {
       clearCart();
+      hasClearedRef.current = true;
     }
-  }, [clear_cart, clearCart]);
+  }, [clear_cart]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

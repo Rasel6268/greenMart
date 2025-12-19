@@ -364,7 +364,7 @@ const OrdersTable = () => {
                   This Month Revenue
                 </p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">
-                  $
+                  ৳
                   {orders
                     .reduce(
                       (total, order) => total + order.payment.amount.total,
@@ -389,7 +389,7 @@ const OrdersTable = () => {
                   Avg. Order Value
                 </p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">
-                  $
+                  ৳
                   {orders.length > 0
                     ? (
                         orders.reduce(
@@ -547,7 +547,7 @@ const OrdersTable = () => {
                     </td>
                     <td className="py-4 px-6">
                       <p className="font-semibold text-gray-900">
-                        ${order.payment.amount.total}
+                        ৳{order.payment.amount.total}
                       </p>
                     </td>
                     <td className="py-4 px-6">

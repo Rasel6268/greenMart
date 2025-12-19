@@ -1,45 +1,50 @@
-// components/AddProduct.jsx
 "use client";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, X, Upload, Save, Trash2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { ArrowLeft, Save, Upload, X, Plus, Trash2, Tag } from "lucide-react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import useImageUpload from "@/Hooks/useImageUpload";
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
 import apiClient from "@/lib/apiClient";
 import instance from "@/lib/instance";
 import { toast } from "react-toastify";
 
-const AddProduct = () => {
+const EditProduct = () => {
   const router = useRouter();
+   const { id: productId } = useParams();
+
+
   const [loading, setLoading] = useState(false);
-  const { uploadImages, imageHandler } = useImageUpload();
+  const { uploadImages, setUploadImages, imageHandler, removeImage: removeUploadedImage } = useImageUpload();
+  const [existingImages, setExistingImages] = useState([]);
+  const [deletedImages, setDeletedImages] = useState([]);
+
+
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
     category: "",
     description: "",
     brand: "",
-    stock: null,
-    retailPrice: null,
-    regularPrice: null,
-    wholesalePrice: null,
-    discountPercent: null,
+    stock: 0,
+    retailPrice: 0,
+    regularPrice: 0,
+    wholesalePrice: 0,
+    discountPercent: 0,
     isDiscountActive: false,
     isFeatured: false,
     isNewArrival: false,
     isTopSeller: false,
     status: "active",
     importOrigin: "",
-    rating: null,
-    reviewCount: null,
+    rating: 0,
+    reviewCount: 0,
     wholesalePricing: [
       {
         minQty: 1,
         maxQty: 4,
-        price: null,
+        price: 0,
         label: "Retail",
         unit: "per item",
         discount: false,
@@ -47,7 +52,7 @@ const AddProduct = () => {
       {
         minQty: 5,
         maxQty: 9,
-        price: null,
+        price: 0,
         label: "Small Bulk",
         unit: "per item",
         discount: true,
@@ -55,7 +60,7 @@ const AddProduct = () => {
       {
         minQty: 10,
         maxQty: 24,
-        price: null,
+        price: 0,
         label: "Medium Bulk",
         unit: "per item",
         discount: true,
@@ -63,7 +68,7 @@ const AddProduct = () => {
       {
         minQty: 25,
         maxQty: 49,
-        price: null,
+        price: 0,
         label: "Large Bulk",
         unit: "per item",
         discount: true,
@@ -71,7 +76,7 @@ const AddProduct = () => {
       {
         minQty: 50,
         maxQty: 99,
-        price: null,
+        price: 0,
         label: "Wholesale",
         unit: "per item",
         discount: true,
@@ -79,13 +84,27 @@ const AddProduct = () => {
       {
         minQty: 100,
         maxQty: null,
-        price: null,
+        price: 0,
         label: "Premium Wholesale",
         unit: "per item",
         discount: true,
       },
     ],
   });
+
+  // Fetch product data
+  const { data: product, isLoadingProduct, error } = useQuery({
+    queryKey: ['product', productId],
+    queryFn: async() => {
+      const res = await instance(`/products/${productId}`)
+      return res.data?.product || res.data?.data
+    },
+    enabled: !!productId
+  });
+
+
+
+  
 
   // Categories and brands
   const { data: categories } = useQuery({
@@ -104,16 +123,56 @@ const AddProduct = () => {
     },
   });
 
-  const createProductMutation = useMutation({
+  
+
+  // Initialize form with product data
+  useEffect(() => {
+    if (product) {
+      setFormData({
+        name: product.name || "",
+        sku: product.sku || "",
+        category: product.category || "",
+        description: product.description || "",
+        brand: product.brand || "",
+        stock: product.stock || 0,
+        retailPrice: product.retailPrice || 0,
+        regularPrice: product.regularPrice || product.retailPrice || 0,
+        wholesalePrice: product.wholesalePrice || 0,
+        discountPercent: product.discountPercent || 0,
+        isDiscountActive: product.isDiscountActive || false,
+        isFeatured: product.isFeatured || false,
+        isNewArrival: product.isNewArrival || false,
+        isTopSeller: product.isTopSeller || false,
+        status: product.status || "active",
+        importOrigin: product.importOrigin || "",
+        rating: product.rating || 0,
+        reviewCount: product.reviewCount || 0,
+        wholesalePricing: product.wholesalePricing || formData.wholesalePricing,
+      });
+
+      if (product.images && product.images.length > 0) {
+        setExistingImages(product.images);
+      }
+
+      
+    }
+  }, [product]);
+
+  const updateProductMutation = useMutation({
     mutationFn: async (productData) => {
-      const res = await apiClient.post(`/products`, productData);
+      const res = await apiClient.patch(`/products/${productId}`, productData);
       return res.data;
     },
     onSuccess: () => {
-      toast.success("Product added successfully");
+      toast.success("Product updated successfully");
       router.push("/products");
     },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Failed to update product");
+    },
   });
+
+  
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -123,7 +182,6 @@ const AddProduct = () => {
     }));
   };
 
-  // Handle number input changes
   const handleNumberChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -132,7 +190,6 @@ const AddProduct = () => {
     }));
   };
 
-  // Handle wholesale pricing changes
   const handleWholesalePricingChange = (index, field, value) => {
     const updatedPricing = [...formData.wholesalePricing];
 
@@ -155,7 +212,6 @@ const AddProduct = () => {
     }));
   };
 
-  // Add new wholesale tier
   const addWholesaleTier = () => {
     setFormData((prev) => ({
       ...prev,
@@ -173,7 +229,6 @@ const AddProduct = () => {
     }));
   };
 
-  // Remove wholesale tier
   const removeWholesaleTier = (index) => {
     if (formData.wholesalePricing.length <= 1) return;
 
@@ -183,30 +238,21 @@ const AddProduct = () => {
     }));
   };
 
-  const addCancel = () => {
-    if (
-      confirm(
-        "Any unsaved changes will be lost. Are you sure you want to cancel?"
-      )
-    ) {
-      router.push("/products");
-    }
+  // Handle existing image removal
+  const removeExistingImage = (index) => {
+    const imageToDelete = existingImages[index];
+    setDeletedImages(prev => [...prev, imageToDelete]);
+    setExistingImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Remove image
+  // Handle uploaded image removal
   const removeImage = (index) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+    setUploadImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Generate SKU automatically
-  const generateSKU = () => {
-    const prefix = formData.category
-      ? formData.category.substring(0, 3).toUpperCase()
-      : "PRO";
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const sku = `${prefix}-${random}`;
-    setFormData((prev) => ({ ...prev, sku }));
-  };
+
+
+
 
   // Form validation
   const validateForm = () => {
@@ -215,59 +261,74 @@ const AddProduct = () => {
     if (!formData.name.trim()) errors.push("Product name is required");
     if (!formData.sku.trim()) errors.push("SKU is required");
     if (!formData.category) errors.push("Category is required");
-    if (formData.retailPrice <= 0)
-      errors.push("Retail price must be greater than 0");
+    if (formData.retailPrice <= 0) errors.push("Retail price must be greater than 0");
     if (formData.stock < 0) errors.push("Stock cannot be negative");
-    if (uploadImages.length === 0)
-      errors.push("At least one image is required");
+    if (existingImages.length + uploadImages.length === 0) errors.push("At least one image is required");
 
-    // Validate wholesale pricing
     formData.wholesalePricing.forEach((tier, index) => {
-      if (tier.price <= 0)
-        errors.push(`Tier ${index + 1} price must be greater than 0`);
-      if (tier.minQty < 0)
-        errors.push(`Tier ${index + 1} min quantity cannot be negative`);
+      if (tier.price <= 0) errors.push(`Tier ${index + 1} price must be greater than 0`);
+      if (tier.minQty < 0) errors.push(`Tier ${index + 1} min quantity cannot be negative`);
       if (tier.maxQty !== null && tier.maxQty < tier.minQty) {
-        errors.push(
-          `Tier ${index + 1} max quantity cannot be less than min quantity`
-        );
+        errors.push(`Tier ${index + 1} max quantity cannot be less than min quantity`);
       }
     });
 
     return errors;
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const errors = validateForm();
     if (errors.length > 0) {
-      alert(errors.join("\n"));
+      toast.error(errors.join("\n"));
       return;
     }
 
     setLoading(true);
 
     try {
+      const allImages = [
+        ...existingImages,
+        ...uploadImages.map(img => img.secure_url || img.url || img)
+      ];
+
       const productData = {
         ...formData,
-        images: uploadImages.map((image) => image.secure_url),
-
+        images: allImages,
+        deletedImages: deletedImages,
         regularPrice: formData.regularPrice || formData.retailPrice,
-        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
 
-      console.log("Submitting product data:", productData);
-      createProductMutation.mutate(productData);
+      console.log("Updating product data:", productData);
+      updateProductMutation.mutate(productData);
     } catch (error) {
-      console.error("Error adding product:", error);
-      alert("Error adding product. Please try again.");
+      console.error("Error updating product:", error);
+      toast.error("Error updating product. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
+  const handleCancel = () => {
+    if (confirm("Any unsaved changes will be lost. Are you sure you want to cancel?")) {
+      router.push("/products");
+    }
+  };
+
+  if (isLoadingProduct) {
+    return (
+      <AdminProtectedRoute>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading product data...</p>
+          </div>
+        </div>
+      </AdminProtectedRoute>
+    );
+  }
 
   return (
     <AdminProtectedRoute>
@@ -283,26 +344,31 @@ const AddProduct = () => {
             </Link>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Add New Product
+                Edit Product
               </h1>
               <p className="text-gray-600">
-                Create a new product in your catalog
+                Update product information
               </p>
+              {product && (
+                <p className="text-sm text-gray-500 mt-1">
+                  SKU: {product.sku} | ID: {productId}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex space-x-3">
             <button
-              onClick={addCancel}
+              onClick={handleCancel}
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
-              disabled={loading || createProductMutation.isPending}
+              disabled={loading || updateProductMutation.isPending}
               className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {createProductMutation.isPending ? (
+              {updateProductMutation.isPending ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Saving...</span>
@@ -310,7 +376,7 @@ const AddProduct = () => {
               ) : (
                 <>
                   <Save size={18} />
-                  <span>Save Product</span>
+                  <span>Update Product</span>
                 </>
               )}
             </button>
@@ -352,24 +418,16 @@ const AddProduct = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       SKU *
                     </label>
-                    <div className="flex space-x-2">
-                      <input
-                        type="text"
-                        name="sku"
-                        value={formData.sku}
-                        onChange={handleInputChange}
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="Product SKU"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={generateSKU}
-                        className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                      >
-                        Generate
-                      </button>
-                    </div>
+                    <input
+                      type="text"
+                      name="sku"
+                      value={formData.sku}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="Product SKU"
+                      required
+                      readOnly
+                    />
                   </div>
 
                   <div>
@@ -445,6 +503,8 @@ const AddProduct = () => {
                 </div>
               </div>
             </div>
+
+      
 
             {/* Wholesale Pricing Card */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
@@ -589,8 +649,40 @@ const AddProduct = () => {
                 Product Images *
               </h2>
 
-              <div className="space-y-4">
-                {/* Image Upload Area */}
+              <div className="space-y-6">
+                {/* Existing Images */}
+                {existingImages.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-3">
+                      Existing Images ({existingImages.length})
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+                      {existingImages.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={typeof image === 'string' ? image : image.url || image.secure_url}
+                            alt={`Existing ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeExistingImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={16} />
+                          </button>
+                          {index === 0 && (
+                            <span className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-xs">
+                              Main
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* New Image Upload Area */}
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <input
                     type="file"
@@ -607,7 +699,7 @@ const AddProduct = () => {
                     <Upload size={48} className="text-gray-400" />
                     <div>
                       <p className="text-lg font-medium text-gray-900">
-                        Upload Images
+                        Upload New Images
                       </p>
                       <p className="text-gray-600">PNG, JPG, JPEG up to 10MB</p>
                     </div>
@@ -620,17 +712,17 @@ const AddProduct = () => {
                   </label>
                 </div>
 
-                {/* Image Previews */}
+                {/* New Image Previews */}
                 {uploadImages.length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-3">
-                      Uploaded Images ({uploadImages.length})
+                      New Uploaded Images ({uploadImages.length})
                     </p>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {uploadImages.map((preview, index) => (
                         <div key={index} className="relative group">
                           <img
-                            src={preview.secure_url}
+                            src={preview.secure_url || preview.url || preview}
                             alt={`Preview ${index + 1}`}
                             className="w-full h-32 object-cover rounded-lg"
                           />
@@ -641,11 +733,6 @@ const AddProduct = () => {
                           >
                             <X size={16} />
                           </button>
-                          {index === 0 && (
-                            <span className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-xs">
-                              Main
-                            </span>
-                          )}
                         </div>
                       ))}
                     </div>
@@ -783,8 +870,9 @@ const AddProduct = () => {
                       name="rating"
                       value={formData.rating}
                       onChange={handleNumberChange}
-                      min=""
+                      min="0"
                       max="5"
+                      step="0.1"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="0.0"
                     />
@@ -799,7 +887,7 @@ const AddProduct = () => {
                       name="reviewCount"
                       value={formData.reviewCount}
                       onChange={handleNumberChange}
-                      min=""
+                      min="0"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="0"
                     />
@@ -898,4 +986,4 @@ const AddProduct = () => {
   );
 };
 
-export default AddProduct;
+export default EditProduct;

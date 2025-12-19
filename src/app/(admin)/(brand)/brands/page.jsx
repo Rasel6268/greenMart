@@ -17,20 +17,22 @@ import axios from "axios";
 import ShoppingLoading from "@/components/Loading/Loading";
 import { toast } from "react-toastify";
 import AdminProtectedRoute from "@/components/admin/AdminProtectedRoute";
+import instance from "@/lib/instance";
+import apiClient from "@/lib/apiClient";
 
 const BrandsTable = () => {
   const queryClient = useQueryClient();
   const { data, isLoading, error } = useQuery({
     queryKey: ["brand"],
     queryFn: async () => {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/brands`);
+      const res = await instance.get("brands");
       return res.data.data;
     },
   });
   const deleteBrandMutation = useMutation({
     mutationFn: async (id) => {
-      const res = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/brands/${id}`
+      const res = await apiClient.delete(
+        `/brands/${id}`
       );
       return res.data;
     },
@@ -59,8 +61,6 @@ const BrandsTable = () => {
   const inactiveBrand = brands.filter(
     (brand) => brand.status === "inacive"
   ).length;
-
-  console.log(data);
   return (
     <AdminProtectedRoute>
       <div className="p-6 space-y-6">
